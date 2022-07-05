@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient({
     log: [{ level: "query", emit: "event" }],
@@ -16,8 +16,6 @@ export default async function spawn(req: NextApiRequest, res: NextApiResponse) {
         // create spawn for minion
         const {
             userId,
-            allies,
-            enemies,
             position,
             random_pos,
             currentAction,
@@ -31,37 +29,9 @@ export default async function spawn(req: NextApiRequest, res: NextApiResponse) {
         const minion = IS_ADMIN
             ? await prisma.minion.create({
                   data: {
-                      owner: userId,
-                      allies: allies || ["ally"],
-                      enemies: enemies || ["enemy"],
                       currentAction: currentAction || "idle",
                       atRestAction: atRestAction || "idle",
                       team: team || [],
-                      locationData: {
-                          position: {
-                              type: "Point",
-                              coordinates:
-                                  position || random_pos
-                                      ? {
-                                            x: Math.floor(
-                                                getRandomArbitrary(
-                                                    -radius,
-                                                    radius
-                                                )
-                                            ),
-                                            y: Math.floor(
-                                                getRandomArbitrary(
-                                                    -radius,
-                                                    radius
-                                                )
-                                            ),
-                                        }
-                                      : {
-                                            x: 0,
-                                            y: 0,
-                                        },
-                          },
-                      },
                   },
               })
             : await prisma.minion.create({
