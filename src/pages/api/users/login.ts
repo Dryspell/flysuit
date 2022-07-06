@@ -26,7 +26,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         }
         const user = await prisma.user.findMany({
             where: {
-                OR: [{ id }, { email }, { name }],
+                OR: [{ email }, { name }],
             },
         });
         console.log(user);

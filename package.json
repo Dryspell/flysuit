@@ -16,6 +16,7 @@
     "@trpc/next": "^9.25.3",
     "@trpc/react": "^9.25.3",
     "@trpc/server": "^9.25.3",
+    "jsonwebtoken": "^8.5.1",
     "next": "12.2.0",
     "next-auth": "^4.8.0",
     "prettier": "^2.7.1",

@@ -48,24 +48,36 @@ model Session {
 }
 
 model User {
-    id               String    @id @default(cuid())
-    name             String
-    email            String?   @unique
-    emailVerified    DateTime?
-    image            String?
-    password         String?
-    isAdmin          Boolean   @default(false)
-    accounts         Account[]
-    sessions         Session[]
-    worlds           World[]
-    chats            Chat[]
-    chatsAsAdmin     Chat[]    @relation(name: "GroupAdmin")
-    sentMessages     Message[] @relation(name: "SentMessage")
-    receivedMessages Message[] @relation(name: "ReceivedMessage")
-    Minions          Minion[]
-    created_at       DateTime  @default(now())
-    updated_at       DateTime  @default(now())
-    version          Int       @default(0)
+    id                 String             @id @default(cuid())
+    name               String
+    email              String?            @unique
+    emailVerified      DateTime?
+    image              String?
+    password           String?
+    isAdmin            Boolean            @default(false)
+    accounts           Account[]
+    sessions           Session[]
+    worlds             World[]
+    chats              Chat[]
+    chatsAsAdmin       Chat[]             @relation(name: "GroupAdmin")
+    sentMessages       Message[]          @relation(name: "SentMessage")
+    receivedMessages   Message[]          @relation(name: "ReceivedMessage")
+    Minions            Minion[]
+    created_at         DateTime           @default(now())
+    updated_at         DateTime           @default(now())
+    version            Int                @default(0)
+    verification_token VerificationToken? @relation("AuthenticationToken")
+}
+
+model VerificationToken {
+    id         String   @unique @default(cuid())
+    user       User     @relation("AuthenticationToken", fields: [userId], references: [id], onDelete: Cascade)
+    userId     String   @unique
+    identifier String
+    token      String   @unique
+    expires    DateTime
+
+    @@unique([identifier, token])
 }
 
 model Chat {
@@ -198,12 +210,4 @@ model Statistics {
     created_at  DateTime @default(now())
     updated_at  DateTime @default(now())
     version     Int      @default(0)
-}
-
-model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
-
-    @@unique([identifier, token])
 }
