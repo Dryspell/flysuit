@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 
 const prisma = new PrismaClient({
     log: [{ level: "query", emit: "event" }],
@@ -57,7 +57,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             expiresIn: process.env.JWT_EXPIRES_IN,
         });
 
-        const user = await prisma.user
+        const user: User | void = await prisma.user
             .create({
                 data: {
                     name,
@@ -73,6 +73,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
                             ),
                         },
                     },
+                },
+                include: {
+                    verification_token: true,
                 },
             })
             .catch((err) => {

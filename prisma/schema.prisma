@@ -76,6 +76,7 @@ model VerificationToken {
     identifier String
     token      String   @unique
     expires    DateTime
+    expiresIn  Int      @default(3600)
 
     @@unique([identifier, token])
 }
@@ -122,9 +123,9 @@ model World {
 
 model Minion {
     id            String       @id @default(cuid())
-    name          String
-    world         World        @relation(fields: [worldId], references: [id], onDelete: Cascade)
-    worldId       String
+    name          String?
+    world         World?       @relation(fields: [worldId], references: [id], onDelete: Cascade)
+    worldId       String?
     stats         Stats?
     location      Location?    @relation(name: "minionLocation", fields: [locationId], references: [id])
     locationId    String?
@@ -132,12 +133,12 @@ model Minion {
     destination   Location?    @relation(name: "minionDestination", fields: [destinationId], references: [id])
     destinationId String?
     inventory     Item[]       @relation(name: "minionInventory")
-    experience    Int
-    currentAction String
-    atRestAction  String
-    team          String
-    owner         User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-    ownerId       String
+    experience    Int          @default(0)
+    currentAction String       @default("idle")
+    atRestAction  String       @default("idle")
+    team          String       @default("blue")
+    owner         User?        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+    ownerId       String?
     tasks         Task[]       @relation(name: "minionTasks")
     created_at    DateTime     @default(now())
     updated_at    DateTime     @default(now())

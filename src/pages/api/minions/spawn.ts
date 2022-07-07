@@ -21,6 +21,8 @@ export default async function spawn(req: NextApiRequest, res: NextApiResponse) {
             currentAction,
             atRestAction,
             team,
+            minion_name,
+            world,
         } = req.body;
         // TODO: validate userId, allies, enemies, position, random_pos
         const IS_ADMIN = req.body.user.isAdmin || true;
@@ -32,6 +34,7 @@ export default async function spawn(req: NextApiRequest, res: NextApiResponse) {
                       currentAction: currentAction || "idle",
                       atRestAction: atRestAction || "idle",
                       team: team || [],
+                      name: minion_name || `minion_${Date.now()}`,
                   },
               })
             : await prisma.minion.create({
