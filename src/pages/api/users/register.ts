@@ -57,7 +57,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             expiresIn: process.env.JWT_EXPIRES_IN,
         });
 
-        const user: User | void = await prisma.user
+        const user: Awaited<Promise<User>> | null = await prisma.user
             .create({
                 data: {
                     name,
@@ -84,6 +84,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
                     status: "error",
                     message: "User already exists",
                 });
+                return null;
             })
             .finally(async () => {
                 await prisma.$disconnect();
