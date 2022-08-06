@@ -37,7 +37,25 @@
             // "keyword",
             "storage.modifier",
             "storage.type.class.js",
-            "storage.type.js"
+            "storage.type.js",
+            "entity.name.type.class", //class names
+            "string.quoted.single",
+            "constant.language",
+            // "entity.other.attribute-name",
+            "entity.name.tag",
+            "keyword.control",
+            "entity.name.method"
+          ],
+          "settings": {
+            "fontStyle": "bold",
+            "fontWeight": "600"
+          }
+        },
+        {
+          "scope": [
+            //following will be in italic (FlottFlott)
+            "storage.type", //class keyword
+            "support.class.builtin"
           ],
           "settings": {
             "fontStyle": "italic bold",
@@ -45,26 +63,10 @@
           }
         },
         {
-          "scope": [
-            //following will be in italic (FlottFlott)
-            "entity.name.type.class", //class names
-            "storage.type", //class keyword
-            "support.class.builtin",
-            "keyword.control",
-            "constant.language",
-            // "entity.other.attribute-name",
-            "string.quoted.single",
-            "entity.name.method",
-            "entity.name.tag"
-          ],
-          "settings": {
-            "fontStyle": "italic bold"
-          }
-        },
-        {
           "scope": ["keyword.control.conditional", "keyword.operator"],
           "settings": {
-            "fontStyle": ""
+            "fontStyle": "bold",
+            "fontWeight": "800"
           }
         }
       ]
