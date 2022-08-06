@@ -1,0 +1,216 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "./generated/sqlite_client"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = "file:./db.sqlite"
+}
+
+model Example {
+    id String @id @default(cuid())
+}
+
+// Necessary for Next auth
+model Account {
+    id                String   @id @default(cuid())
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String?
+    access_token      String?
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String?
+    session_state     String?
+    user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    created_at        DateTime @default(now())
+    updated_at        DateTime @default(now())
+    version           Int      @default(0)
+
+    @@unique([provider, providerAccountId])
+}
+
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    created_at   DateTime @default(now())
+    updated_at   DateTime @default(now())
+    version      Int      @default(0)
+}
+
+model User {
+    id                 String             @id @default(cuid())
+    name               String
+    email              String?            @unique
+    emailVerified      DateTime?
+    image              String?
+    password           String?
+    isAdmin            Boolean            @default(false)
+    role               String?            @default("user")
+    accounts           Account[]
+    sessions           Session[]
+    worlds             World[]
+    chats              Chat[]
+    chatsAsAdmin       Chat[]             @relation(name: "GroupAdmin")
+    sentMessages       Message[]          @relation(name: "SentMessage")
+    receivedMessages   Message[]          @relation(name: "ReceivedMessage")
+    Minions            Minion[]
+    created_at         DateTime           @default(now())
+    updated_at         DateTime           @default(now())
+    version            Int                @default(0)
+    verification_token VerificationToken? @relation("AuthenticationToken")
+}
+
+model VerificationToken {
+    id         String   @unique @default(cuid())
+    user       User     @relation("AuthenticationToken", fields: [userId], references: [id], onDelete: Cascade)
+    userId     String   @unique
+    identifier String
+    token      String   @unique
+    expires    DateTime
+    expiresIn  Int      @default(3600)
+
+    @@unique([identifier, token])
+}
+
+model Chat {
+    id         String    @id @default(cuid())
+    name       String
+    users      User[]
+    groupAdmin User[]    @relation(name: "GroupAdmin")
+    messages   Message[] @relation(name: "Messages")
+    created_at DateTime  @default(now())
+    updated_at DateTime  @default(now())
+    version    Int       @default(0)
+}
+
+model Message {
+    id         String   @id @default(cuid())
+    receiver   User     @relation(name: "ReceivedMessage", fields: [receiverId], references: [id])
+    sender     User     @relation(name: "SentMessage", fields: [senderId], references: [id])
+    chat       Chat     @relation(name: "Messages", fields: [chatId], references: [id])
+    senderId   String
+    receiverId String
+    chatId     String
+    content    String
+    isRead     Boolean  @default(false)
+    isDeleted  Boolean  @default(false)
+    isEdited   Boolean  @default(false)
+    created_at DateTime @default(now())
+    updated_at DateTime @default(now())
+    version    Int      @default(0)
+}
+
+model World {
+    id         String     @id @default(cuid())
+    name       String
+    users      User[]
+    isActive   Boolean    @default(true)
+    minions    Minion[]
+    created_at DateTime   @default(now())
+    updated_at DateTime   @default(now())
+    version    Int        @default(0)
+    Location   Location[]
+}
+
+model Minion {
+    id            String       @id @default(cuid())
+    name          String?
+    world         World?       @relation(fields: [worldId], references: [id], onDelete: Cascade)
+    worldId       String?
+    stats         Stats?
+    location      Location?    @relation(name: "minionLocation", fields: [locationId], references: [id])
+    locationId    String?
+    targetId      String?
+    destination   Location?    @relation(name: "minionDestination", fields: [destinationId], references: [id])
+    destinationId String?
+    inventory     Item[]       @relation(name: "minionInventory")
+    experience    Int          @default(0)
+    currentAction String       @default("idle")
+    atRestAction  String       @default("idle")
+    team          String       @default("blue")
+    owner         User?        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+    ownerId       String?
+    tasks         Task[]       @relation(name: "minionTasks")
+    created_at    DateTime     @default(now())
+    updated_at    DateTime     @default(now())
+    version       Int          @default(0)
+    Statistics    Statistics[]
+    Location      Location?    @relation(fields: [locationId], references: [id])
+}
+
+model Location {
+    id                 String   @id @default(cuid())
+    name               String
+    world              World    @relation(fields: [worldId], references: [id], onDelete: Cascade)
+    worldId            String   @unique
+    x                  Int
+    y                  Int
+    z                  Int
+    created_at         DateTime @default(now())
+    updated_at         DateTime @default(now())
+    version            Int      @default(0)
+    minionLocations    Minion[] @relation(name: "minionLocation")
+    minionDestinations Minion[] @relation(name: "minionDestination")
+    Minion             Minion[]
+}
+
+model Task {
+    id          String    @id @default(cuid())
+    name        String
+    task        String
+    startsAt    DateTime
+    completedAt DateTime?
+    Minion      Minion?   @relation("minionTasks", fields: [minionId], references: [id])
+    minionId    String?
+}
+
+model Item {
+    id              String  @id @default(cuid())
+    minionInventory Minion? @relation(name: "minionInventory", fields: [minionId], references: [id])
+    minionId        String?
+}
+
+model Stats {
+    id                  String   @id @default(cuid())
+    level               Int      @default(1)
+    health              Int      @default(100)
+    attack              Int      @default(10)
+    defense             Int      @default(10)
+    movementSpeed       Int      @default(10)
+    meleeAttackSpeed    Int      @default(10)
+    rangeAttackSpeed    Int      @default(10)
+    meleeAttackCooldown Int      @default(10)
+    rangeAttackCooldown Int      @default(10)
+    visionRange         Int      @default(10)
+    created_at          DateTime @default(now())
+    updated_at          DateTime @default(now())
+    version             Int      @default(0)
+    minion              Minion   @relation(fields: [minionId], references: [id], onDelete: Cascade)
+    minionId            String   @unique @default(cuid())
+}
+
+model Statistics {
+    id          String   @id @default(cuid())
+    minion      Minion   @relation(fields: [minionId], references: [id], onDelete: Cascade)
+    minionId    String   @unique @default(cuid())
+    kills       Int      @default(0)
+    deaths      Int      @default(0)
+    assists     Int      @default(0)
+    damageDealt Int      @default(0)
+    damageTaken Int      @default(0)
+    healingDone Int      @default(0)
+    created_at  DateTime @default(now())
+    updated_at  DateTime @default(now())
+    version     Int      @default(0)
+}
