@@ -1,0 +1,2 @@
+INSERT INTO `Account`(`id`,`userId`,`type`,`provider`,`providerAccountId`,`refresh_token`,`refresh_token_expires_in`,`access_token`,`expires_at`,`token_type`,`scope`,`id_token`,`session_state`,`oauth_token_secret`,`oauth_token`) VALUES
+("cl5psbrzb0013y0vqnuitviqp","cl5psbrwv0006y0vqqcc4v45c","oauth","github","13140947",NULL,NULL,"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",NULL,"bearer","read:user,user:email",NULL,NULL,NULL,NULL);
