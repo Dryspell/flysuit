@@ -11,9 +11,7 @@ import { NextApiRequest, NextApiResponse } from 'next'
 // };
 
 export default async function spawn(req: NextApiRequest, res: NextApiResponse) {
-  return res.status(418).json({
-    message: "I'm a teapot",
-  })
+  return res.send('Hello World!')
 }
 //     console.log(req.method, req.body);
 //     if (req.method === "POST") {
