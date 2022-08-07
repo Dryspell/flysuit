@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { HS_base_url, HS_Headers } from '../../lib/hubspot'
 
 export type HS_Property = {
   updatedAt: Date
@@ -29,26 +30,32 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if (req.method === 'GET') {
-    console.log(Object.keys(req))
     console.log(req.query)
+    const entity: string = (req.query.entity as string) || 'contacts'
+    const groupName = req.query.groupName
+      ? req.query.groupName
+      : entity.toLowerCase() === 'contacts'
+      ? 'contactinformation'
+      : entity.toLowerCase() === 'companies'
+      ? 'companyinformation'
+      : entity.toLowerCase() === 'deals'
+      ? 'dealinformation'
+      : undefined
+
     const HS_Properties = await fetch(
-      `https://api.hubapi.com/crm/v3/properties/contacts?archived=false`,
+      `${HS_base_url}crm/v3/properties/${entity}?archived=false`,
       {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${process.env.HS_PRIVATE_APP_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: HS_Headers,
       }
     )
       .then((res: any) => res.json())
       .then((res) => {
         console.log(`Received ${res.results.length} HS_Properties`)
-        const results = req.query.hasOwnProperty('short')
+        const results = req.query.short
           ? res.results
-              .filter(
-                (result: HS_Property) =>
-                  result.groupName === 'contactinformation'
+              .filter((result: HS_Property) =>
+                groupName ? result.groupName === groupName : true
               )
               .filter((result: HS_Property) => result.name.slice(0, 2) !== 'hs')
               .map((result: HS_Property) => {
