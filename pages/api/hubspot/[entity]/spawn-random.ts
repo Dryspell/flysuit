@@ -41,6 +41,7 @@ export default async function handler(
           companies.push(createRandomCompany())
         })
         break
+
       default:
         return res.status(400).json({ message: `Invalid entity` })
         break

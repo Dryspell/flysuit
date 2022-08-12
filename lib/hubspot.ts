@@ -116,9 +116,9 @@ export function createRandomDeal(): HS_Deal {
 export async function searchHubspot(
   ObjectTypeId: string,
   body: any,
-  limit?: number
+  limit?: number | string
 ) {
-  !body.limit && (body.limit = limit || 100)
+  !body.limit && (body.limit = parseInt(limit as string) || 100)
   return await fetch(`${HS_base_url}crm/v3/objects/${ObjectTypeId}/search`, {
     method: 'POST',
     headers: HS_Headers(),
