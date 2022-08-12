@@ -32,21 +32,21 @@ export default async function handler(
   if (req.method === 'GET') {
     console.log(req.query)
     const entity: string = (req.query.entity as string) || 'contacts'
-    const groupName = req.query.groupName
-      ? req.query.groupName
-      : entity.toLowerCase() === 'contacts'
-      ? 'contactinformation'
-      : entity.toLowerCase() === 'companies'
-      ? 'companyinformation'
-      : entity.toLowerCase() === 'deals'
-      ? 'dealinformation'
-      : undefined
+    const accessToken = req.query.accessToken
+    let groupName =
+      req.query.groupName || entity.toLowerCase() === 'contacts'
+        ? 'contactinformation'
+        : entity.toLowerCase() === 'companies'
+        ? 'companyinformation'
+        : entity.toLowerCase() === 'deals'
+        ? 'dealinformation'
+        : undefined
 
     const HS_Properties = await fetch(
       `${HS_base_url}crm/v3/properties/${entity}?archived=false`,
       {
         method: 'GET',
-        headers: HS_Headers,
+        headers: HS_Headers(accessToken as string),
       }
     )
       .then((res: any) => res.json())
