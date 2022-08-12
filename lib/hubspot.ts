@@ -118,6 +118,7 @@ export async function searchHubspot(
   body: any,
   limit?: number | string
 ) {
+  typeof body === 'string' ? (body = JSON.parse(body)) : body
   !body.limit && (body.limit = parseInt(limit as string) || 100)
   return await fetch(`${HS_base_url}crm/v3/objects/${ObjectTypeId}/search`, {
     method: 'POST',
