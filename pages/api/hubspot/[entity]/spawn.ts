@@ -8,7 +8,7 @@ import {
   HS_base_url,
   HS_Company,
   HS_Headers,
-  HS_SearchResult,
+  HS_Record,
   postAssociations,
   postHubspot,
   searchForEntitiesWithProperty,
@@ -51,7 +51,7 @@ export async function searchCompaniesByNames(companyNames: string[]) {
   //       })
   //       .then((json) => {
   //         const results = json.results.map(
-  //           (result: HS_SearchResult) => result.properties.name
+  //           (result: HS_Record) => result.properties.name
   //         )
   //         return results
   //       })
@@ -172,10 +172,12 @@ export default async function handler(
   }
 
   if (req.method === 'POST') {
-    const postedCompanies = await postHubspot('companies', companies)
+    const postedCompanies: HS_Record[] = (
+      await postHubspot('companies', companies)
+    ).records
 
-    const companiesToAssociate: HS_SearchResult[] = postedCompanies.filter(
-      (company: HS_SearchResult) => {
+    const companiesToAssociate: HS_Record[] = postedCompanies.filter(
+      (company: HS_Record) => {
         return uninstantiated_companies
           .map((uic) => uic.name)
           .includes(company.properties.name)

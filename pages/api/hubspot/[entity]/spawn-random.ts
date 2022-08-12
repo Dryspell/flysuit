@@ -1,18 +1,11 @@
-import {
-  createRandomCompany,
-  createRandomContact,
-  createRandomDeal,
-  HS_Company,
-  HS_Contact,
-  HS_Deal,
-} from '@/lib/hubspot'
+import { createRandom, HS_Record, postHubspot } from '@/lib/hubspot'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (!['GET'].includes(req.method as string))
+  if (!['GET', 'POST'].includes(req.method as string))
     return res.status(405).json({ message: `Method ${req.method} Not Allowed` })
 
   const entityPlural = req.query.entity as string
@@ -20,37 +13,22 @@ export default async function handler(
 
   console.log(`Spawning ${count} ${entityPlural}`)
 
-  const createRandom = (entity: string, count: number) => {
-    const contacts: HS_Contact[] = []
-    const companies: HS_Company[] = []
-    const deals: HS_Deal[] = []
-    switch (entity) {
-      case 'contacts':
-        Array.from({ length: count }).forEach(() => {
-          contacts.push(createRandomContact())
-        })
-        break
+  const random = await createRandom(entityPlural, count)
+  const randomResults = random.message === 'Success' ? random.data : []
 
-      case 'deals':
-        Array.from({ length: count }).forEach(() => {
-          deals.push(createRandomDeal())
-        })
-        break
-      case 'companies':
-        Array.from({ length: count }).forEach(() => {
-          companies.push(createRandomCompany())
-        })
-        break
+  if (req.method === 'GET') {
+    return res.status(200).json({ message: `Success`, data: randomResults })
+  }
 
-      default:
-        return res.status(400).json({ message: `Invalid entity` })
-        break
-    }
+  if (req.method === 'POST') {
+    const postedEntities: HS_Record[] = (
+      await postHubspot(entityPlural, randomResults)
+    ).records
+    // console.log(postEntities)
 
     return res.status(200).json({
       message: `Success`,
-      data: [contacts, companies, deals].filter((ent) => ent.length)[0],
+      data: postedEntities,
     })
   }
-  return createRandom(entityPlural, count)
 }

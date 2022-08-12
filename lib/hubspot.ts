@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker'
+import { splitIntoChunks } from './set-utils'
 
 export const HS_Headers = (BearerToken?: string) => {
   return {
@@ -8,12 +9,12 @@ export const HS_Headers = (BearerToken?: string) => {
 }
 export const HS_base_url = `https://api.hubapi.com/`
 
-export type HS_SearchResult = {
+export type HS_Record = {
   id: number
   properties: any
-  createdAt: Date
-  updatedAt: Date
-  archived: boolean
+  createdAt?: Date
+  updatedAt?: Date
+  archived?: boolean
 }
 
 export type HS_Contact = {
@@ -113,37 +114,99 @@ export function createRandomDeal(): HS_Deal {
   }
 }
 
+export function createRandom(entity: string, count: number) {
+  const contacts: HS_Contact[] = []
+  const companies: HS_Company[] = []
+  const deals: HS_Deal[] = []
+
+  switch (entity) {
+    case 'contacts':
+      Array.from({ length: count }).forEach(() => {
+        contacts.push(createRandomContact())
+      })
+      break
+
+    case 'deals':
+      Array.from({ length: count }).forEach(() => {
+        deals.push(createRandomDeal())
+      })
+      break
+    case 'companies':
+      Array.from({ length: count }).forEach(() => {
+        companies.push(createRandomCompany())
+      })
+      break
+
+    default:
+      throw new Error(`Unknown entity: ${entity}`)
+      break
+  }
+
+  return {
+    message: `Success`,
+    data: [contacts, companies, deals].filter((ent) => ent.length)[0],
+  }
+}
+
 export async function searchHubspot(
   ObjectTypeId: string,
   body: any,
-  limit?: number | string
+  limit?: number | string,
+  BearerToken?: string
 ) {
   typeof body === 'string' ? (body = JSON.parse(body)) : body
   !body.limit && (body.limit = parseInt(limit as string) || 100)
   return await fetch(`${HS_base_url}crm/v3/objects/${ObjectTypeId}/search`, {
     method: 'POST',
-    headers: HS_Headers(),
+    headers: HS_Headers(BearerToken),
     body: JSON.stringify(body),
   }).then((res) => res.json())
 }
 
-export async function postHubspot(entityPlural: string, records: any[]) {
-  return await fetch(
-    `${HS_base_url}crm/v3/objects/${entityPlural}/batch/create`,
-    {
-      headers: HS_Headers(),
-      method: 'POST',
-      body: JSON.stringify({
-        inputs: records.map((record) => {
-          return { properties: record }
-        }),
-      }),
-    }
+export async function postHubspot(
+  entityPlural: string,
+  records: { id: number; properties: any }[] | any[],
+  rate?: number,
+  BearerToken?: string
+) {
+  const recordBatches: HS_Record[][] = splitIntoChunks(
+    records,
+    entityPlural === 'contacts' ? 10 : 100
   )
-    .then((res: any) => res.json())
-    .then((res) => {
-      return res.results
-    })
+
+  //@ts-ignore
+  const results: Awaited<
+    {
+      status: string
+      value: HS_Record[]
+    }[]
+  > = await Promise.allSettled(
+    recordBatches.map((batch) =>
+      fetch(`${HS_base_url}crm/v3/objects/${entityPlural}/batch/create`, {
+        headers: HS_Headers(BearerToken),
+        method: 'POST',
+        body: JSON.stringify({
+          inputs: batch.map((record: HS_Record) => {
+            return {
+              properties: record.properties ? record.properties : record,
+            }
+          }),
+        }),
+      })
+        .then((res: any) => res.json())
+        .then((res) => {
+          return res.results
+        })
+    )
+  )
+  return {
+    records:
+      results
+        .filter((batch) => batch.status === 'fulfilled')
+        .map((batch) => batch.value)
+        .flat() || [],
+    errors: results.filter((batch) => batch.status === 'rejected'),
+  }
 }
 
 export type AssociationDefinition = {
@@ -230,7 +293,7 @@ export async function searchForEntitiesWithProperty(
     limit: 100,
   }
   return await searchHubspot(ObjectTypeId, body).then((json) => {
-    const entities_with_properties: HS_SearchResult[] = json.results
+    const entities_with_properties: HS_Record[] = json.results
     return entities_with_properties
   })
 }
