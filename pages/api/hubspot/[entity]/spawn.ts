@@ -2,13 +2,6 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { serverEnv } from '../../../../env/server'
 import { searchForEntitiesWithProperty } from '../../../../lib/hubspot'
 
-export async function searchCompaniesByNames(companyNames: string[]) {
-  companyNames = Array.from(new Set(companyNames))
-  console.log(`Searching for CompanyNames:`, companyNames)
-
-  return await searchForEntitiesWithProperty('companies', 'name', companyNames)
-}
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse

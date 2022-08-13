@@ -11,10 +11,16 @@ export default async function handler(
   console.log(`Query:`, JSON.stringify(req.query))
   const entityPlural = req.query.entity as string
   const queryLimit = (req.query.limit as string) || '100'
+  const queryAfter = (req.query.after as string) || '0'
   const requestParams = Object.entries(req.query).filter(([key, value]) => {
-    return !['entity', 'limit'].includes(key)
+    return !['entity', 'limit', 'after'].includes(key)
   })
-  const body = !Object.keys(req.body).includes('filterGroups')
+  const body: {
+    filterGroups: any[]
+    limit?: string
+    after?: string
+    properties?: any
+  } = !Object.keys(req.body).includes('filterGroups')
     ? {
         filterGroups: [
           {
@@ -28,7 +34,10 @@ export default async function handler(
           },
         ],
       }
-    : req.body.filterGroups
+    : { filterGroups: req.body.filterGroups }
+
+  body.limit = queryLimit
+  body.after = queryAfter
 
   console.log(`Search Body:`, JSON.stringify(body))
   const searchResults = await searchHubspot(entityPlural, body, queryLimit)
