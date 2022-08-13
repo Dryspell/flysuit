@@ -1,8 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { faker } from '@faker-js/faker'
+import { serverEnv } from '../../../../env/server'
 import {
   AssociationDefinition,
   AssociationInput,
+  createRandom,
   createRandomCompany,
   getAssociationDefintions,
   HS_base_url,
@@ -19,127 +21,110 @@ export async function searchCompaniesByNames(companyNames: string[]) {
   console.log(`Searching for CompanyNames:`, companyNames)
 
   return await searchForEntitiesWithProperty('companies', 'name', companyNames)
-  // const companyNamesChunks = splitIntoChunks(companyNames, 3)
-  // console.log(`CompanyNamesChunks:`, companyNamesChunks)
-  // const bodies = companyNamesChunks.map((chunk: string[]) =>
-  //   JSON.stringify({
-  //     filterGroups: chunk.map((companyName) => {
-  //       return {
-  //         filters: [
-  //           {
-  //             value: companyName,
-  //             propertyName: 'name',
-  //             operator: 'EQ',
-  //           },
-  //         ],
-  //       }
-  //     }),
-  //     limit: 100,
-  //   })
-  // )
-  // console.log(`SearchBodies:`, bodies)
-  // return await Promise.allSettled(
-  //   bodies.map((body) =>
-  //     fetch(`${HS_base_url}crm/v3/objects/companies/search`, {
-  //       method: 'POST',
-  //       headers: HS_Headers(),
-  //       body,
-  //     })
-  //       .then((res) => {
-  //         console.log(`status: ${res.status}`) // @ts-ignore
-  //         return res.json()
-  //       })
-  //       .then((json) => {
-  //         const results = json.results.map(
-  //           (result: HS_Record) => result.properties.name
-  //         )
-  //         return results
-  //       })
-  //   )
-  // )
 }
 
 export async function getExistingRumoredEntities(
   entityPlural: string,
-  rumorEntityPlural: string,
-  rumorProperty: string
+  rumorProperty: string,
+  rumorEntityPlural: string
 ) {
   const getExistingRumoredEntities = await searchForEntitiesWithProperty(
-    'contacts',
-    'company'
-  ).then(async (contacts_with_companies: any) => {
-    const companyNames = contacts_with_companies.map(
-      (contact: any) => contact.properties.company
-    )
-    console.log(
-      `Found ${companyNames.length} contacts with companies:`,
-      companyNames
-    )
-    const searchedCompanies = (
-      await searchCompaniesByNames(companyNames)
-    ).reduce((acc: any, curr: { status: string; value: string[] } | any) => {
-      return acc.concat(curr.value)
-    }, [])
-    console.log(
-      `Found ${searchedCompanies.length} searched companies:`,
-      searchedCompanies
+    entityPlural,
+    rumorProperty
+  ).then(async (entities_with_property: any) => {
+    const entityPropValues: string[] = entities_with_property.map(
+      (entity: { id: string; properties: any[] }) => {
+        //@ts-ignore
+        return entity.properties[rumorProperty]
+      }
     )
 
-    return Array.from(
-      new Set(contacts_with_companies.map((cwc: any) => cwc.properties.company))
+    console.log(
+      `Found ${entityPropValues.length} ${entityPlural} with ${rumorProperty}:`
     )
+
+    const searchedEntityPropValues = (
+      await searchForEntitiesWithProperty(
+        rumorEntityPlural,
+        rumorProperty,
+        entityPropValues
+      )
+    )
+      .reduce((acc: any, curr: { status: string; value: string[] } | any) => {
+        return acc.concat(curr.value)
+      }, [])
+      .map()
+    console.log(
+      `Found ${searchedEntityPropValues.length} searched ${entityPlural}:`,
+      searchedEntityPropValues
+    )
+
+    const rumoredEntities = entityPropValues
       .map(
-        (company) =>
-          contacts_with_companies.filter(
-            (cwc: any) => cwc.properties.company === company
+        (entityPropValue) =>
+          entities_with_property.filter(
+            (ewp: any) => ewp.properties[rumorProperty] === entityPropValue
           )[0]
       )
-      .filter((cwc: any) => !searchedCompanies.includes(cwc.properties.company))
-      .map((cwc: any) => {
-        return {
-          about_us: faker.company.bs(),
-          founded_year: faker.date.past().getFullYear(),
-          is_public: Math.random() < 0.5,
-          name: cwc.properties.company,
-          phone: faker.phone.number(),
-          address: faker.address.streetAddress(),
-          city: cwc.properties.city,
-          state: cwc.properties.state,
-          zip: cwc.properties.zip,
-          country: cwc.properties.country,
-          website: faker.internet.url(),
-          industry: cwc.properties.industry,
-          description: faker.lorem.paragraph(),
-        } as HS_Company
+      .filter(
+        (ewp: any) =>
+          !searchedEntityPropValues.includes(ewp.properties[rumorProperty])
+      )
+      .map((ewp: any) => {
+        const { name, company, city, state, zip, country, industry } =
+          ewp.properties
+        const baseRecord =
+          entityPlural === 'companies'
+            ? [
+                {
+                  name: company,
+                  city,
+                  state,
+                  zip,
+                  country,
+                  industry,
+                },
+              ]
+            : undefined
+        return createRandom(entityPlural, 1, baseRecord)
       })
+
+    return rumoredEntities
   })
 
   console.log(`Returned ${getExistingRumoredEntities.length} companies`)
   return getExistingRumoredEntities
 }
 
-export default async function handler(
+async function postRumoredEntities(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
+  {
+    entityPlural,
+    rumorProperty,
+    rumorEntityPlural,
+  }: {
+    entityPlural: string
+    rumorProperty: string
+    rumorEntityPlural: string
+  }
 ) {
-  if (!['POST', 'GET'].includes(req.method as string))
-    return res.status(405).json({ message: `Method ${req.method} Not Allowed` })
-
   const uninstantiated_companies: HS_Company[] = []
   const random_companies: HS_Company[] = []
 
-  const { createUninstantiatedChance } = req.query
-  let unInstantiatedCompanies = createUninstantiatedChance
-    ? await getExistingRumoredEntities('contacts', 'companies', 'company')
-    : []
+  let unInstantiatedCompanies = await getExistingRumoredEntities(
+    entityPlural,
+    rumorProperty,
+    rumorEntityPlural
+  )
 
   Array.from({ length: 10 }).forEach(() => {
     if (
-      createUninstantiatedChance &&
-      Math.random() * 100 < Number(createUninstantiatedChance)
+      req.query.createUninstantiatedChance &&
+      Math.random() * 100 < Number(req.query.createUninstantiatedChance)
     ) {
       const uninstantiatedCompany = unInstantiatedCompanies.pop()
-      uninstantiatedCompany
+      uninstantiatedCompany //@ts-ignore
         ? uninstantiated_companies.push(uninstantiatedCompany)
         : null
     } else {
@@ -261,4 +246,29 @@ export default async function handler(
       },
     })
   }
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (!['POST', 'GET'].includes(req.method as string))
+    return res.status(405).json({ message: `Method ${req.method} Not Allowed` })
+
+  const { createUninstantiatedChance, entity } = req.query
+  if (!createUninstantiatedChance || entity !== 'companies') {
+    const random = await fetch(
+      `${serverEnv.NEXT_APP_URL}/api/hubspot/${entity}/spawn-random`,
+      { method: req.method }
+    ).then((r) => r.json())
+    return random.message === 'Success'
+      ? res.status(200).json(random)
+      : res.status(500).json(random)
+  }
+
+  return await postRumoredEntities(req, res, {
+    entityPlural: 'contacts',
+    rumorProperty: 'company',
+    rumorEntityPlural: 'companies',
+  })
 }

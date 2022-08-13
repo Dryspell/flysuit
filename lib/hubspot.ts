@@ -38,26 +38,29 @@ export type HS_Contact = {
   industry: string
 }
 
-export function createRandomContact(): HS_Contact {
+export function createRandomContact(baseProps?: HS_Contact): HS_Contact {
   return {
-    firstname: faker.name.firstName(),
-    lastname: faker.name.lastName(),
-    date_of_birth: faker.date.birthdate(),
-    salutation: faker.name.prefix(),
-    twitterhandle: faker.internet.userName(),
-    email: faker.internet.email(),
-    mobilephone: faker.phone.number(),
-    phone: faker.phone.number(),
-    fax: faker.phone.number(),
-    address: faker.address.streetAddress(),
-    city: faker.address.city(),
-    state: faker.address.state(),
-    zip: faker.address.zipCode(),
-    country: faker.address.country(),
-    jobtitle: faker.name.jobTitle(),
-    company: faker.company.companyName(),
-    website: faker.internet.url(),
-    industry: faker.name.jobArea(),
+    ...{
+      firstname: faker.name.firstName(),
+      lastname: faker.name.lastName(),
+      date_of_birth: faker.date.birthdate(),
+      salutation: faker.name.prefix(),
+      twitterhandle: faker.internet.userName(),
+      email: faker.internet.email(),
+      mobilephone: faker.phone.number(),
+      phone: faker.phone.number(),
+      fax: faker.phone.number(),
+      address: faker.address.streetAddress(),
+      city: faker.address.city(),
+      state: faker.address.state(),
+      zip: faker.address.zipCode(),
+      country: faker.address.country(),
+      jobtitle: faker.name.jobTitle(),
+      company: faker.company.companyName(),
+      website: faker.internet.url(),
+      industry: faker.name.jobArea(),
+    },
+    ...baseProps,
   }
 }
 
@@ -77,22 +80,26 @@ export type HS_Company = {
   description: string
 }
 
-export function createRandomCompany(): HS_Company {
+export function createRandomCompany(baseProps?: HS_Company): HS_Company {
   let company: HS_Company = {
-    about_us: faker.company.bs(),
-    founded_year: faker.date.past(50).getFullYear(),
-    is_public: Math.random() < 0.5,
-    name: faker.company.companyName(),
-    phone: faker.phone.number(),
-    address: faker.address.streetAddress(),
-    city: faker.address.city(),
-    state: faker.address.state(),
-    zip: faker.address.zipCode(),
-    country: faker.address.country(),
-    website: faker.internet.url(),
-    industry: faker.name.jobArea(),
-    description: faker.lorem.paragraph(),
+    ...{
+      about_us: faker.company.bs(),
+      founded_year: faker.date.past(50).getFullYear(),
+      is_public: Math.random() < 0.5,
+      name: faker.company.companyName(),
+      phone: faker.phone.number(),
+      address: faker.address.streetAddress(),
+      city: faker.address.city(),
+      state: faker.address.state(),
+      zip: faker.address.zipCode(),
+      country: faker.address.country(),
+      website: faker.internet.url(),
+      industry: faker.name.jobArea(),
+      description: faker.lorem.paragraph(),
+    },
+    ...baseProps,
   }
+
   return company
 }
 
@@ -102,43 +109,50 @@ export type HS_Deal = {
   description: string
 }
 
-export function createRandomDeal(): HS_Deal {
+export function createRandomDeal(baseProps?: HS_Deal): HS_Deal {
   const verb = faker.word.verb()
 
   return {
-    dealname: `${faker.company.companyName()} | ${verb}`,
-    closedate: faker.date.past(),
-    description: faker.fake(
-      `{{word.adjective}} {{word.noun}} ${verb} {{word.adjective}} {{word.noun}}`
-    ),
+    ...{
+      dealname: `${faker.company.companyName()} | ${verb}`,
+      closedate: faker.date.past(),
+      description: faker.fake(
+        `{{word.adjective}} {{word.noun}} ${verb} {{word.adjective}} {{word.noun}}`
+      ),
+    },
+    ...baseProps,
   }
 }
 
-export function createRandom(entity: string, count: number) {
+export function createRandom(
+  entityPlural: string,
+  count: number,
+  baseRecords?: any[]
+) {
   const contacts: HS_Contact[] = []
   const companies: HS_Company[] = []
   const deals: HS_Deal[] = []
 
-  switch (entity) {
+  switch (entityPlural) {
     case 'contacts':
       Array.from({ length: count }).forEach(() => {
-        contacts.push(createRandomContact())
+        contacts.push(createRandomContact(baseRecords?.pop()))
       })
       break
 
     case 'deals':
       Array.from({ length: count }).forEach(() => {
-        deals.push(createRandomDeal())
+        deals.push(createRandomDeal(baseRecords?.pop()))
       })
       break
     case 'companies':
       Array.from({ length: count }).forEach(() => {
-        companies.push(createRandomCompany())
+        companies.push(createRandomCompany(baseRecords?.pop()))
       })
       break
 
     default:
-      throw new Error(`Unknown entity: ${entity}`)
+      throw new Error(`Unknown entity: ${entityPlural}`)
       break
   }
 
@@ -284,7 +298,7 @@ export async function searchForEntitiesWithProperty(
       filters: {
         propertyName: property,
         operator: 'IN', //@ts-ignore
-        values: companyNames,
+        values: propertyList,
       },
     })
   const body = {
@@ -294,7 +308,7 @@ export async function searchForEntitiesWithProperty(
   }
   return await searchHubspot(ObjectTypeId, body).then((json) => {
     const entities_with_properties: HS_Record[] = json.results
-    return entities_with_properties
+    return Array.from(new Set(entities_with_properties))
   })
 }
 
