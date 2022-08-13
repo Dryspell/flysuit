@@ -240,9 +240,9 @@ async function postRumoredEntities(
         postedCompanies,
         companiesToAssociate,
         targetsToAssociate,
-        getAssociationDefintion: getAssociationDefintions,
+        associationDefintions,
         associationInputs,
-        postAssociations,
+        postedAssociations,
       },
     })
   }

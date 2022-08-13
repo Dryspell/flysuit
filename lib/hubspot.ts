@@ -261,12 +261,13 @@ export type AssociationInput = {
 export async function postAssociations(
   fromEntity: string,
   toEntity: string,
-  associationInputs: AssociationInput[]
+  associationInputs: AssociationInput[],
+  BearerToken?: string
 ) {
   return fetch(
     `${HS_base_url}crm/v4/associations/${fromEntity}/${toEntity}/batch/create`,
     {
-      headers: HS_Headers(),
+      headers: HS_Headers(BearerToken),
       method: 'POST',
       body: JSON.stringify({
         inputs: associationInputs,
