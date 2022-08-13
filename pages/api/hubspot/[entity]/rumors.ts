@@ -97,6 +97,11 @@ export default async function handler(
   if (!['companies'].includes(entity as string))
     return res.status(400).json({ message: `Invalid entity ${entity}` })
 
+  const BearerToken = (req.query.bearer_token ||
+    req.query.token ||
+    req.body.bearer_token ||
+    req.body.token) as string
+
   const entityPlural = req.query.entity || req.body.entity
   const rumorProperty = req.query.rumor_property || req.body.rumor_property
   const rumorEntityPlural = req.query.rumor_entity || req.body.rumor_entity
@@ -123,7 +128,7 @@ export default async function handler(
 
   if (req.method === 'POST') {
     const postedCompanies: HS_Record[] = (
-      await postHubspot('companies', rumoredCompanies)
+      await postHubspot('companies', rumoredCompanies, BearerToken)
     ).records
 
     const companiesToAssociate: HS_Record[] = postedCompanies.filter(

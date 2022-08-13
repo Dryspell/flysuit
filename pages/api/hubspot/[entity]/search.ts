@@ -9,6 +9,11 @@ export default async function handler(
     return res.status(405).json({ message: `Method ${req.method} Not Allowed` })
 
   console.log(`Query:`, JSON.stringify(req.query))
+  const BearerToken = (req.query.bearer_token ||
+    req.query.token ||
+    req.body.bearer_token ||
+    req.body.token) as string
+
   const entityPlural = req.query.entity as string
   const queryLimit = (req.query.limit as string) || '100'
   const queryAfter = (req.query.after as string) || '0'
@@ -40,7 +45,12 @@ export default async function handler(
   body.after = queryAfter
 
   console.log(`Search Body:`, JSON.stringify(body))
-  const searchResults = await searchHubspot(entityPlural, body, queryLimit)
+  const searchResults = await searchHubspot(
+    entityPlural,
+    body,
+    queryLimit,
+    BearerToken
+  )
 
   return res.status(200).json(searchResults)
 }
