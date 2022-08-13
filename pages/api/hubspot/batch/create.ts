@@ -8,10 +8,20 @@ export default async function handler(
   if (!['POST'].includes(req.method as string))
     return res.status(405).json({ message: `Method ${req.method} Not Allowed` })
 
+  const BearerToken = (req.query.bearer_token ||
+    req.query.token ||
+    req.body.bearer_token ||
+    req.body.token) as string
+
   if (req.method === 'POST') {
     const entityPlural = (req.query.entity || req.body.entity) as string
+    const records = req.body.records as any[]
+
+    if (!entityPlural || !records)
+      return res.status(400).json({ message: `Missing required parameters` })
+
     const postedEntities: HS_Record[] = (
-      await postHubspot(entityPlural, req.body.records)
+      await postHubspot(entityPlural, req.body.records, BearerToken)
     ).records
     // console.log(postEntities)
 

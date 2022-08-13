@@ -1,17 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { faker } from '@faker-js/faker'
 import { serverEnv } from '../../../../env/server'
 import {
-  AssociationDefinition,
-  AssociationInput,
   createRandom,
-  createRandomCompany,
-  getAssociationDefintions,
-  HS_base_url,
   HS_Company,
-  HS_Headers,
   HS_Record,
-  postAssociations,
   postHubspot,
   searchForEntitiesWithProperty,
 } from '../../../../lib/hubspot'
@@ -26,145 +18,114 @@ export async function searchCompaniesByNames(companyNames: string[]) {
 export async function getExistingRumoredEntities(
   entityPlural: string,
   rumorProperty: string,
-  rumorEntityPlural: string
+  rumorEntityPlural: string,
+  count: number
 ) {
-  const getExistingRumoredEntities = await searchForEntitiesWithProperty(
+  const entitiesWithProperty = await searchForEntitiesWithProperty(
     entityPlural,
     rumorProperty
-  ).then(async (entities_with_property: any) => {
-    const entityPropValues: string[] = entities_with_property.map(
-      (entity: { id: string; properties: any[] }) => {
-        //@ts-ignore
-        return entity.properties[rumorProperty]
-      }
+  )
+
+  const entityPropValues: string[] = entitiesWithProperty.map(
+    (entity: { id: string; properties: any[] }) => {
+      //@ts-ignore
+      return entity.properties[rumorProperty]
+    }
+  )
+
+  console.log(
+    `Found ${entityPropValues.length} ${entityPlural} with ${rumorProperty}:`
+  )
+
+  const searchedEntityPropValues = (
+    await searchForEntitiesWithProperty(
+      rumorEntityPlural,
+      rumorProperty,
+      entityPropValues
     )
+  ).reduce((acc: any, curr: any) => {
+    return acc.concat(curr.value)
+  }, [])
 
-    console.log(
-      `Found ${entityPropValues.length} ${entityPlural} with ${rumorProperty}:`
+  console.log(
+    `Found ${searchedEntityPropValues.length} searched ${entityPlural}:`,
+    searchedEntityPropValues
+  )
+
+  const rumoredEntities = entityPropValues
+    .map(
+      (entityPropValue) =>
+        entitiesWithProperty.filter(
+          (ewp: any) => ewp.properties[rumorProperty] === entityPropValue
+        )[0]
     )
-
-    const searchedEntityPropValues = (
-      await searchForEntitiesWithProperty(
-        rumorEntityPlural,
-        rumorProperty,
-        entityPropValues
-      )
+    .filter(
+      (ewp: any) =>
+        !searchedEntityPropValues.includes(ewp.properties[rumorProperty])
     )
-      .reduce((acc: any, curr: { status: string; value: string[] } | any) => {
-        return acc.concat(curr.value)
-      }, [])
-      .map()
-    console.log(
-      `Found ${searchedEntityPropValues.length} searched ${entityPlural}:`,
-      searchedEntityPropValues
+    .map((ewp: any) => {
+      const { name, company, city, state, zip, country, industry } =
+        ewp.properties
+      const baseRecord =
+        entityPlural === 'companies'
+          ? [
+              {
+                name: company,
+                city,
+                state,
+                zip,
+                country,
+                industry,
+              },
+            ]
+          : undefined
+      return createRandom(entityPlural, 1, baseRecord)
+    })
+    .filter(
+      (response: { message: string; data: any }) =>
+        response.message === 'Success'
     )
+    .reduce((acc: any, curr: any) => {
+      return acc.concat(curr.data)
+    }, [])
 
-    const rumoredEntities = entityPropValues
-      .map(
-        (entityPropValue) =>
-          entities_with_property.filter(
-            (ewp: any) => ewp.properties[rumorProperty] === entityPropValue
-          )[0]
-      )
-      .filter(
-        (ewp: any) =>
-          !searchedEntityPropValues.includes(ewp.properties[rumorProperty])
-      )
-      .map((ewp: any) => {
-        const { name, company, city, state, zip, country, industry } =
-          ewp.properties
-        const baseRecord =
-          entityPlural === 'companies'
-            ? [
-                {
-                  name: company,
-                  city,
-                  state,
-                  zip,
-                  country,
-                  industry,
-                },
-              ]
-            : undefined
-        return createRandom(entityPlural, 1, baseRecord)
-      })
-
-    return rumoredEntities
-  })
-
-  console.log(`Returned ${getExistingRumoredEntities.length} companies`)
-  return getExistingRumoredEntities
+  console.log(`Returned ${rumoredEntities.length} companies`)
+  return rumoredEntities
 }
 
 async function postRumoredEntities(
   req: NextApiRequest,
   res: NextApiResponse,
-  {
+  entityPlural: string,
+  rumorProperty: string,
+  rumorEntityPlural: string,
+  count?: number
+) {
+  let rumoredCompanies: HS_Company[] = await getExistingRumoredEntities(
     entityPlural,
     rumorProperty,
     rumorEntityPlural,
-  }: {
-    entityPlural: string
-    rumorProperty: string
-    rumorEntityPlural: string
-  }
-) {
-  const uninstantiated_companies: HS_Company[] = []
-  const random_companies: HS_Company[] = []
-
-  let unInstantiatedCompanies = await getExistingRumoredEntities(
-    entityPlural,
-    rumorProperty,
-    rumorEntityPlural
+    count || 10
   )
-
-  Array.from({ length: 10 }).forEach(() => {
-    if (
-      req.query.createUninstantiatedChance &&
-      Math.random() * 100 < Number(req.query.createUninstantiatedChance)
-    ) {
-      const uninstantiatedCompany = unInstantiatedCompanies.pop()
-      uninstantiatedCompany //@ts-ignore
-        ? uninstantiated_companies.push(uninstantiatedCompany)
-        : null
-    } else {
-      random_companies.push(createRandomCompany())
-    }
-  })
-  console.log(
-    `Creating ${uninstantiated_companies.length} pre-referenced companies and ${random_companies.length} RANDOM companies`,
-    uninstantiated_companies.map((c) => {
-      return { name: c.name }
-    })
-  )
-  const companies: HS_Company[] = [
-    ...uninstantiated_companies,
-    ...random_companies,
-  ]
 
   if (req.method === 'GET') {
     return res.status(200).json({
       message: `Success`,
       data: {
-        companies: !req.query.createUninstantiatedChance
-          ? companies
-          : {
-              uninstantiated_companies,
-              random_companies,
-            },
+        companies: rumoredCompanies,
       },
     })
   }
 
   if (req.method === 'POST') {
     const postedCompanies: HS_Record[] = (
-      await postHubspot('companies', companies)
+      await postHubspot('companies', rumoredCompanies)
     ).records
 
     const companiesToAssociate: HS_Record[] = postedCompanies.filter(
       (company: HS_Record) => {
-        return uninstantiated_companies
-          .map((uic) => uic.name)
+        return rumoredCompanies
+          .map((record) => record.name)
           .includes(company.properties.name)
       }
     )
@@ -193,45 +154,23 @@ async function postRumoredEntities(
       })
     )
 
-    const associationDefintions = await getAssociationDefintions(
-      'companies',
-      'contacts'
-    )
-
-    //@ts-ignore
-    const associationInputs: AssociationInput[] = companiesToAssociate
-      .map((company) =>
-        targetsToAssociate
-          .filter(
-            (target) => target.properties.company === company.properties.name
-          )
-          .map((target) => {
-            return associationDefintions.map((assocDef) => {
-              return {
-                from: { id: company.id },
-                to: { id: target.id },
-                types: [
-                  {
-                    associationCategory: assocDef.category,
-                    associationTypeId: assocDef.typeId,
-                  },
-                ],
-              }
-            })
-          })
-      )
-      .reduce((acc, curr) => [...acc, ...curr], [])
-      .reduce((acc, curr) => [...acc, ...curr], [])
-
-    console.log(
-      `Making ${associationInputs.length} Associations of companies to contacts across ${getAssociationDefintions.length} Association definitions, sample:`,
-      associationInputs[0]
-    )
-
-    const postedAssociations = await postAssociations(
-      'companies',
-      'contacts',
-      associationInputs
+    const postedAssociations = await fetch(
+      `${serverEnv.NEXT_APP_URL}/api/batch/associate`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to_entity: 'companies',
+          from_entity: 'contacts',
+          from_records: companiesToAssociate,
+          to_records: targetsToAssociate,
+          relations: {
+            from: 'name',
+            to: 'company',
+          },
+          token: req.query.token,
+        }),
+      }
     )
 
     return res.status(200).json({
@@ -240,8 +179,6 @@ async function postRumoredEntities(
         postedCompanies,
         companiesToAssociate,
         targetsToAssociate,
-        associationDefintions,
-        associationInputs,
         postedAssociations,
       },
     })
@@ -266,9 +203,5 @@ export default async function handler(
       : res.status(500).json(random)
   }
 
-  return await postRumoredEntities(req, res, {
-    entityPlural: 'contacts',
-    rumorProperty: 'company',
-    rumorEntityPlural: 'companies',
-  })
+  return await postRumoredEntities(req, res, 'contacts', 'company', 'companies')
 }

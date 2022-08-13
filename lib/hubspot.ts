@@ -10,7 +10,7 @@ export const HS_Headers = (BearerToken?: string) => {
 export const HS_base_url = `https://api.hubapi.com/`
 
 export type HS_Record = {
-  id: number
+  id: string
   properties: any
   createdAt?: Date
   updatedAt?: Date
@@ -180,7 +180,6 @@ export async function searchHubspot(
 export async function postHubspot(
   entityPlural: string,
   records: { id: number; properties: any }[] | any[],
-  rate?: number,
   BearerToken?: string
 ) {
   const recordBatches: HS_Record[][] = splitIntoChunks(
@@ -258,6 +257,52 @@ export type AssociationInput = {
     associationTypeId: number | string
   }[]
 }
+
+import type { NextApiRequest, NextApiResponse } from 'next'
+
+export async function makeAssociationInputsFromRecords(
+  fromEntityPlural: string,
+  toEntityPlural: string,
+  fromRecords: HS_Record[],
+  toRecords: HS_Record[],
+  associationRelation: { from: string; to: string },
+  associationTypeId?: number,
+  associationDefinitions?: AssociationDefinition[]
+) {
+  associationDefinitions =
+    associationDefinitions ||
+    (await getAssociationDefintions(toEntityPlural, fromEntityPlural))
+
+  const associationCategory = associationDefinitions[0].category
+  associationTypeId = associationTypeId
+    ? associationTypeId
+    : (associationDefinitions[0].typeId as number)
+
+  const associationInputs: AssociationInput[] = []
+  fromRecords.forEach((fromRecord) => {
+    toRecords
+      .filter(
+        (toRecord) =>
+          fromRecord.properties[associationRelation.from] ===
+          toRecord.properties[associationRelation.to]
+      )
+      .forEach((toRecord) => {
+        associationInputs.push({
+          from: { id: fromRecord.id },
+          to: { id: toRecord.id }, //@ts-ignore
+          types: [{ associationCategory, associationTypeId }],
+        })
+      })
+  })
+
+  console.log(
+    `Made ${associationInputs.length} Associations of ${fromEntityPlural} to ${toEntityPlural} across ${getAssociationDefintions.length} Association definitions, sample:`,
+    associationInputs[0]
+  )
+
+  return associationInputs
+}
+
 export async function postAssociations(
   fromEntity: string,
   toEntity: string,
