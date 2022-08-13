@@ -1,21 +1,34 @@
+import { createRandom, HS_Record, postHubspot } from '@/lib/hubspot'
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { serverEnv } from '../../../../env/server'
-import { searchForEntitiesWithProperty } from '../../../../lib/hubspot'
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (!['POST', 'GET'].includes(req.method as string))
+  if (!['GET', 'POST'].includes(req.method as string))
     return res.status(405).json({ message: `Method ${req.method} Not Allowed` })
 
-  const { entity } = req.query
-  const random = await fetch(
-    `${serverEnv.NEXT_APP_URL}/api/hubspot/${entity}/spawn-random`,
-    { method: req.method }
-  ).then((r) => r.json())
+  const entityPlural = req.query.entity as string
+  const count = parseInt(req.query.count as string) || 10
 
-  return random.message === 'Success'
-    ? res.status(200).json(random)
-    : res.status(500).json(random)
+  console.log(`Spawning ${count} ${entityPlural}`)
+
+  const random = await createRandom(entityPlural, count)
+  const randomResults = random.message === 'Success' ? random.data : []
+
+  if (req.method === 'GET') {
+    return res.status(200).json({ message: `Success`, data: randomResults })
+  }
+
+  if (req.method === 'POST') {
+    const postedEntities: HS_Record[] = (
+      await postHubspot(entityPlural, randomResults)
+    ).records
+    // console.log(postEntities)
+
+    return res.status(200).json({
+      message: `Success`,
+      data: postedEntities,
+    })
+  }
 }
