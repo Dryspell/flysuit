@@ -45,7 +45,7 @@ const slackParser = makeValidator<string>((input) => {
 export const serverEnv = {
   ...browserEnv,
   ...envsafe({
-    DATABASE_URL: str({ default: process.env.DATABASE_URL }),
+    DATABASE_URL: str({ default: 'http://localhost:5005' }),
     NEXT_APP_URL: slackParser({
       allowEmpty: true,
       devDefault: 'http://localhost:3000',
