@@ -21,7 +21,7 @@ export default async function handler(
       return res.status(400).json({ message: `Missing required parameters` })
 
     const postedEntities: HS_Record[] = (
-      await postHubspot(entityPlural, req.body.records, BearerToken)
+      await postHubspot(entityPlural, req.body.records, 'archive', BearerToken)
     ).records
     // console.log(postEntities)
 

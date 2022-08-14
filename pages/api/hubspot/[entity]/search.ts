@@ -52,5 +52,5 @@ export default async function handler(
     BearerToken
   )
 
-  return res.status(200).json(searchResults)
+  return res.status(200).json({ message: 'Success', data: searchResults })
 }

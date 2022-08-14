@@ -180,11 +180,12 @@ export async function searchHubspot(
 export async function postHubspot(
   entityPlural: string,
   records: { id: number; properties: any }[] | any[],
+  operation: 'create' | 'update' | 'archive',
   BearerToken?: string
 ) {
   const recordBatches: HS_Record[][] = splitIntoChunks(
     records,
-    entityPlural === 'contacts' ? 10 : 100
+    entityPlural === 'contacts' && operation === 'create' ? 10 : 100
   )
 
   //@ts-ignore
@@ -195,7 +196,7 @@ export async function postHubspot(
     }[]
   > = await Promise.allSettled(
     recordBatches.map((batch) =>
-      fetch(`${HS_base_url}crm/v3/objects/${entityPlural}/batch/create`, {
+      fetch(`${HS_base_url}crm/v3/objects/${entityPlural}/batch/${operation}`, {
         headers: HS_Headers(BearerToken),
         method: 'POST',
         body: JSON.stringify({
@@ -221,6 +222,12 @@ export async function postHubspot(
     errors: results.filter((batch) => batch.status === 'rejected'),
   }
 }
+
+export async function updateHubspot(
+  entityPlural: string,
+  records: { id: number; properties: any }[] | any[],
+  BearerToken?: string
+) {}
 
 export type AssociationDefinition = {
   category: 'HUBSPOT_DEFINED' | 'USER_DEFINED'

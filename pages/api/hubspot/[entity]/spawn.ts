@@ -8,6 +8,11 @@ export default async function handler(
   if (!['GET', 'POST'].includes(req.method as string))
     return res.status(405).json({ message: `Method ${req.method} Not Allowed` })
 
+  const BearerToken = (req.query.bearer_token ||
+    req.query.token ||
+    req.body.bearer_token ||
+    req.body.token) as string
+
   const entityPlural = req.query.entity as string
   const count = parseInt(req.query.count as string) || 10
 
@@ -22,7 +27,7 @@ export default async function handler(
 
   if (req.method === 'POST') {
     const postedEntities: HS_Record[] = (
-      await postHubspot(entityPlural, randomResults)
+      await postHubspot(entityPlural, randomResults, 'create', BearerToken)
     ).records
     // console.log(postEntities)
 

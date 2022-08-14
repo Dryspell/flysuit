@@ -128,7 +128,7 @@ export default async function handler(
 
   if (req.method === 'POST') {
     const postedCompanies: HS_Record[] = (
-      await postHubspot('companies', rumoredCompanies, BearerToken)
+      await postHubspot('companies', rumoredCompanies, 'create', BearerToken)
     ).records
 
     const companiesToAssociate: HS_Record[] = postedCompanies.filter(
