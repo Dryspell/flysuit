@@ -25,6 +25,8 @@ export default async function handler(
     if (!entityPlural || !records || !operation)
       return res.status(400).json({ message: `Missing required parameters` })
 
+    console.log(`Batch Operation ${operation} for ${entityPlural} requested`)
+
     const postedEntities: HS_Record[] = (
       await postHubspot(entityPlural, records, operation, BearerToken)
     ).records

@@ -101,5 +101,5 @@ test('Contacts CRUD Flow', async ({ page }) => {
       },
     }
   )
-  expect(contactArchive.status()).toBe(204)
+  expect(contactArchive.status()).toBe(200)
 })
