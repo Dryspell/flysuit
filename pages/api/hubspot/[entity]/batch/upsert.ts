@@ -16,10 +16,14 @@ export default async function handler(
   if (req.method === 'POST') {
     const entityPlural = (req.query.entity || req.body.entity) as string
     const records = (req.body.records || req.body.inputs) as any[]
-    const operation = (req.body.operation ||
-      req.body.action ||
-      req.query.operation ||
-      req.query.action) as 'create' | 'update'
+    const operation =
+      req.query.update === 'true'
+        ? 'update'
+        : ((req.body.operation ||
+            req.body.action ||
+            req.query.operation ||
+            req.query.action) as 'create' | 'update')
+
     if (!['create', 'update'].includes(operation))
       return res
         .status(400)

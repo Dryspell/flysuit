@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test'
 
-test('homepage has Playwright in title and get started link linking to the intro page', async ({
+test('ping', async ({ page }) => {
+  const response = await page.request.get(`/api/ping`)
+  expect(response.status()).toBe(200)
+})
+
+test.skip('homepage has Playwright in title and get started link linking to the intro page', async ({
   page,
 }) => {
   await page.goto('https://playwright.dev/')
