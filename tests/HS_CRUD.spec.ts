@@ -1,7 +1,9 @@
-import { test, expect } from '@playwright/test'
+import { HS_Contact } from '@/lib/hubspot'
+import { chromium, test, expect } from '@playwright/test'
+import { browser } from 'process'
 
-test('Spawn Contacts', async ({ page }) => {
-  const response = await page.request.get(`/api/hubspot/contacts/spawn`)
+test('Spawn Contacts', async ({ request }) => {
+  const response = await request.get(`/api/hubspot/contacts/spawn`)
   expect(response.status()).toBe(200)
 
   const body: { message: string; data: any } = await response.json()
@@ -10,8 +12,18 @@ test('Spawn Contacts', async ({ page }) => {
 })
 
 test('Contacts CRUD Flow', async ({ page }) => {
+  // async () => {
+  //   const browser = await chromium.launch({
+  //     logger: {
+  //       isEnabled: (name, severity) => name === 'browser',
+  //       log: (name, severity, message, args) => console.log(`${name} ${message}`),
+  //     },
+  //   })
+  //   const context = await browser.newContext()
+  //   const page = await context.newPage()
+
   let search = await page.request.post(
-    `/api/hubspot/contacts/search?bearer_token=${process.env.HS_PRIVATE_APP_KEY}&limit=10`,
+    `/api/hubspot/contacts/search?limit=10`,
     {
       data: {
         filterGroups: [
@@ -32,15 +44,18 @@ test('Contacts CRUD Flow', async ({ page }) => {
 
   let body: { message: string; data: any } = await search.json()
   expect(body.message).toBe('Success')
-  expect(body.data.length).not.toBe(0)
+  expect(body.data.total).toBeDefined()
+  expect(body.data.total).not.toBe(0)
 
-  const contact = body.data[0]
+  const contacts: { id: number | string; properties: HS_Contact }[] =
+    body.data.results
+  const contact = contacts[0]
   expect(contact.properties.email).toBeDefined()
   expect(contact.properties.firstname).toBeDefined()
   expect(contact.properties.lastname).toBeDefined()
 
   let contact_search = await page.request.post(
-    `/api/hubspot/contacts/search?bearer_token=${process.env.HS_PRIVATE_APP_KEY}&limit=10`,
+    `/api/hubspot/contacts/search?limit=10`,
     {
       data: {
         filterGroups: [
@@ -49,7 +64,7 @@ test('Contacts CRUD Flow', async ({ page }) => {
               {
                 propertyName: 'email',
                 operator: 'IN',
-                values: [contact.email],
+                values: [contact.properties.email],
               },
             ],
           },
@@ -62,12 +77,12 @@ test('Contacts CRUD Flow', async ({ page }) => {
   expect(contact_search.status()).toBe(200)
   body = await contact_search.json()
   expect(body.message).toBe('Success')
-  expect(body.data.length).toBe(1)
+  expect(body.data.results.length).toBe(1)
 
-  expect(body.data[0].properties.email).toBe(contact.email)
+  expect(body.data.results[0].properties.email).toBe(contact.properties.email)
 
   let contactUpdate = await page.request.post(
-    `/api/hubspot/contacts/update?bearer_token=${process.env.HS_PRIVATE_APP_KEY}`,
+    `/api/hubspot/contacts/batch/upsert?update=true`,
     {
       data: {
         inputs: [
@@ -86,10 +101,10 @@ test('Contacts CRUD Flow', async ({ page }) => {
   expect(contactUpdate.status()).toBe(200)
   body = await contactUpdate.json()
   expect(body.message).toBe('Success')
-  expect(body.data.length).toBe(1)
+  expect(body.data.results.length).toBe(1)
 
   let contactArchive = await page.request.post(
-    `/api/hubspot/contacts/archive?bearer_token=${process.env.HS_PRIVATE_APP_KEY}`,
+    `/api/hubspot/contacts/batch/archive`,
     {
       data: {
         inputs: [

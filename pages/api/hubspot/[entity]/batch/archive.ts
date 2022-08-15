@@ -15,7 +15,7 @@ export default async function handler(
 
   if (req.method === 'POST') {
     const entityPlural = (req.query.entity || req.body.entity) as string
-    const records = req.body.records as any[]
+    const records = (req.body.records || req.body.inputs) as any[]
 
     if (!entityPlural || !records)
       return res.status(400).json({ message: `Missing required parameters` })

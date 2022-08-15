@@ -162,6 +162,11 @@ export function createRandom(
   }
 }
 
+export type SearchResults = {
+  total: number
+  results: HS_Record[]
+}
+
 export async function searchHubspot(
   ObjectTypeId: string,
   body: any,
@@ -174,12 +179,16 @@ export async function searchHubspot(
     method: 'POST',
     headers: HS_Headers(BearerToken),
     body: JSON.stringify(body),
-  }).then((res) => res.json())
+  })
+    .then((res) => res.json())
+    .then((res) => {
+      return res as SearchResults
+    })
 }
 
 export async function postHubspot(
   entityPlural: string,
-  records: { id: number; properties: any }[] | any[],
+  records: HS_Record[] | any[],
   operation: 'create' | 'update' | 'archive',
   BearerToken?: string
 ) {
@@ -202,6 +211,7 @@ export async function postHubspot(
         body: JSON.stringify({
           inputs: batch.map((record: HS_Record) => {
             return {
+              id: record.id,
               properties: record.properties ? record.properties : record,
             }
           }),
@@ -209,6 +219,7 @@ export async function postHubspot(
       })
         .then((res: any) => res.json())
         .then((res) => {
+          console.log(res)
           return res.results
         })
     )
