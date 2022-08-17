@@ -325,7 +325,8 @@ export async function postAssociations(
   fromEntity: string,
   toEntity: string,
   associationInputs: AssociationInput[],
-  BearerToken?: string
+  BearerToken?: string,
+  options?: any
 ) {
   return fetch(
     `${HS_base_url}crm/v4/associations/${fromEntity}/${toEntity}/batch/create`,
@@ -347,14 +348,17 @@ export async function postAssociations(
 export async function searchForEntitiesWithProperty(
   ObjectTypeId: string,
   property: string,
-  propertyList?: string[]
+  propertyList?: string[],
+  options?: any
 ) {
   const filterGroups = [
     {
-      filters: {
-        propertyName: property,
-        operator: 'HAS_PROPERTY',
-      },
+      filters: [
+        {
+          propertyName: property,
+          operator: 'HAS_PROPERTY',
+        },
+      ],
     },
   ]
   propertyList?.length &&
@@ -370,6 +374,9 @@ export async function searchForEntitiesWithProperty(
     properties: getDefaultSearchProperties(ObjectTypeId),
     limit: 100,
   }
+
+  // if (options.verbose) console.log(body)
+
   return await searchHubspot(ObjectTypeId, body).then((json) => {
     const entities_with_properties: HS_Record[] = json.results
     return Array.from(new Set(entities_with_properties))

@@ -102,9 +102,11 @@ export default async function handler(
     req.body.bearer_token ||
     req.body.token) as string
 
-  const entityPlural = req.query.entity || req.body.entity
-  const rumorProperty = req.query.rumor_property || req.body.rumor_property
-  const rumorEntityPlural = req.query.rumor_entity || req.body.rumor_entity
+  const entityPlural =
+    req.query.base_entity || req.body.base_entity || 'contacts'
+  const rumorProperty =
+    req.query.rumor_property || req.body.rumor_property || 'company'
+  const rumorEntityPlural = req.query.entity || req.body.entity
   const count = req.query.count || req.body.count || 10
 
   let rumoredCompanies: HS_Company[] = await getExistingRumoredEntities(
@@ -114,7 +116,7 @@ export default async function handler(
     count
   )
 
-  if (entityPlural !== 'companies')
+  if (rumorEntityPlural !== 'companies')
     return res.status(500).json({ message: 'Not implemented' })
 
   if (req.method === 'GET') {

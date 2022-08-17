@@ -16,12 +16,13 @@ export default async function handler(
   if (req.method === 'POST') {
     const entityPlural = (req.query.entity || req.body.entity) as string
     const records = (req.body.records || req.body.inputs) as any[]
-    const operation = req.query.operation as 'create' | 'update' | 'archive'
 
+    const operation = req.query.operation as 'create' | 'update' | 'archive'
     if (!['create', 'update', 'archive'].includes(operation))
       return res
         .status(400)
         .json({ message: `The Requested Operation is not Supported` })
+
     if (!entityPlural || !records || !operation)
       return res.status(400).json({ message: `Missing required parameters` })
 
