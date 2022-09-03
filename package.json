@@ -10,11 +10,17 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@emotion/react": "^11.10.4",
+    "@emotion/server": "^11.10.0",
     "@headlessui/react": "^1.4.3",
     "@instantish/mack": "^1.2.0",
+    "@mantine/core": "^5.2.5",
+    "@mantine/hooks": "^5.2.5",
+    "@mantine/next": "^5.2.5",
     "@next-auth/prisma-adapter": "^1.0.1",
     "@prisma/client": "^4.1.1",
     "@radix-ui/react-tooltip": "^0.1.6",
+    "@tabler/icons": "^1.92.0",
     "@trpc/client": "^9.18.0",
     "@trpc/next": "^9.18.0",
     "@trpc/react": "^9.18.0",
