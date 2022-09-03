@@ -2,7 +2,10 @@ import { useEffect } from 'react'
 import { DataFrame } from 'danfojs'
 
 export async function getStaticProps() {
-  const data = await fetch('http://localhost:3000/api/hubspot/contacts/spawn')
+  //   console.log(process.env.NEXT_APP_URL)
+  const data = await fetch(
+    `${process.env.NEXT_APP_URL}/api/hubspot/contacts/spawn`
+  )
     .then((res) => res.json())
     .then((data) => data.data)
   console.log(`Received ${data.length} contacts`)
