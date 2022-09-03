@@ -12,7 +12,7 @@ export async function getStaticProps() {
   return { props: { data } }
 }
 
-function Main({ data }: any) {
+export default function Main({ data }: any) {
   useEffect(() => {
     const df = new DataFrame(data)
     df.plot('plot_div').table()
@@ -26,5 +26,3 @@ function Main({ data }: any) {
     </div>
   )
 }
-
-export default Main
