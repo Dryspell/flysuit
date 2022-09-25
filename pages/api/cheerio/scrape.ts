@@ -1,30 +1,42 @@
 import cheerio from 'cheerio'
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { Url } from 'url'
+
+export type ScrapeResult = {
+  url: string
+  selector: string
+  attribute?: string
+  results: string[]
+}
+
+export const scrape = async (
+  url: string,
+  selector: string,
+  attribute?: string
+): Promise<ScrapeResult | string> => {
+  try {
+    const response = await fetch(url).then((res) => res.text())
+    const $ = cheerio.load(response)
+    const results = $(selector)
+    console.log(`Received ${results.text().length} characters of text`)
+
+    const resultsArray: any[] = []
+    attribute
+      ? results.each((i) =>
+          resultsArray.push($(results[i]).attr(attribute as string))
+        )
+      : results.each((i) => resultsArray.push($(results[i]).text()))
+    return { url, selector, attribute, results: resultsArray }
+  } catch (err: any) {
+    console.log(`Received invalid inputs: ${url} and ${selector}`)
+    return err.message
+  }
+}
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const scrape = async (url: string, selector: string, attribute?: string) => {
-    try {
-      const response = await fetch(url).then((res) => res.text())
-      const $ = cheerio.load(response)
-      const results = $(selector)
-      console.log(`Received ${results.text().length} characters of text`)
-
-      const resultsArray: any[] = []
-      attribute
-        ? results.each((i) =>
-            resultsArray.push($(results[i]).attr(attribute as string))
-          )
-        : results.each((i) => resultsArray.push($(results[i]).text()))
-      return resultsArray
-    } catch (err: any) {
-      console.log(`Received invalid inputs: ${url} and ${selector}`)
-      return err.message
-    }
-  }
-
   const selector = (req.query.selector as string) || 'div'
   const url = req.query.url as string
 
@@ -53,15 +65,11 @@ export default async function handler(
     },
   ]
   const getExampleResults = async () => {
-    const results: any[] = []
-    for (const example of examples) {
-      const result = await scrape(
-        example.url,
-        example.selector,
-        example.attribute
+    const results = await Promise.all(
+      examples.map((example) =>
+        scrape(example.url, example.selector, example.attribute)
       )
-      results.push({ ...example, result })
-    }
+    )
     return results
   }
 
