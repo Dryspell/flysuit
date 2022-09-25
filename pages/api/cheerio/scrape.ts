@@ -27,7 +27,7 @@ export const scrape = async (
         )
       : results.each((i) => {
           const text = $(results[i]).text()
-          text !== '' && resultsArray.push(text)
+          text !== '' && text !== ' ' && resultsArray.push(text)
         })
     return { url, selector, attribute, results: resultsArray }
   } catch (err: any) {
