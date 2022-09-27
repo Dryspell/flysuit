@@ -5,19 +5,20 @@ import {
   InputData,
   jsonInputForTargetLanguage,
 } from 'quicktype-core'
-import fs from 'fs'
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const url = req.query.url as string
+export const quickType = async (
+  url?: string,
+  language?: string,
+  schemaName?: string,
+  alpha?: string,
+  optionalProps?: string
+) => {
   const jsonData = url && (await fetch(url).then((res) => res.json()))
   //   console.log(jsonData)
 
   const jsonInput = jsonInputForTargetLanguage('typescript')
   const jsonSource = {
-    name: (req.query.schemaName as string) || 'mySchema',
+    name: schemaName || 'mySchema',
     samples: [JSON.stringify(jsonData || (await createRandom('contacts', 2)))],
   }
   await jsonInput.addSource(jsonSource)
@@ -25,24 +26,41 @@ export default async function handler(
   const inputData = new InputData()
   inputData.addInput(jsonInput)
 
-  console.log(Object.values(['csharp', 'typescript', 'json-schema']))
   const outputLang: 'typescript' | 'json-schema' | 'csharp' | 'python' = [
     'csharp',
     'typescript',
     'json-schema',
     'python',
-  ].includes(req.query.language as string)
-    ? (req.query.language as 'typescript' | 'json-schema' | 'csharp' | 'python')
+  ].includes(language as string)
+    ? (language as 'typescript' | 'json-schema' | 'csharp' | 'python')
     : 'typescript'
 
-  const quickTypeJson = await quicktype({
+  return await quicktype({
     inputData,
     lang: outputLang,
-
-    leadingComments: [],
+    // leadingComments: url ? [url] : [],
     rendererOptions: { 'just-types': 'true' },
-    alphabetizeProperties: req.query.alpha === 'true' ? true : false,
-    allPropertiesOptional: req.query.optionalProps === 'true' ? true : false,
+    alphabetizeProperties: alpha === 'true' ? true : false,
+    allPropertiesOptional: optionalProps === 'true' ? true : false,
   })
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const url = req.query.url as string
+  const language = req.query.language as string
+  const schemaName = req.query.schemaName as string
+  const alpha = req.query.alpha as string
+  const optionalProps = req.query.optionalProps as string
+
+  const quickTypeJson = await quickType(
+    url,
+    language,
+    schemaName,
+    alpha,
+    optionalProps
+  )
   return res.status(200).send(quickTypeJson.lines.join('\n'))
 }
