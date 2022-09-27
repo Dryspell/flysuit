@@ -45,6 +45,7 @@
     "next-auth": "^4.2.1",
     "next-themes": "^0.0.15",
     "pretty": "^2.0.0",
+    "quicktype-core": "^6.1.0",
     "react": "17.0.2",
     "react-beautiful-dnd": "^13.1.1",
     "react-beforeunload": "^2.5.2",
