@@ -7,19 +7,25 @@ import {
 } from 'quicktype-core'
 
 export const quickType = async (
+  json?: any,
   url?: string,
   language?: string,
   schemaName?: string,
   alpha?: string,
   optionalProps?: string
 ) => {
-  const jsonData = url && (await fetch(url).then((res) => res.json()))
+  const jsonData =
+    Object.keys(json).length !== 0
+      ? json
+      : url
+      ? await fetch(url).then((res) => res.json())
+      : await createRandom('contacts', 2)
   //   console.log(jsonData)
 
   const jsonInput = jsonInputForTargetLanguage('typescript')
   const jsonSource = {
     name: schemaName || 'mySchema',
-    samples: [JSON.stringify(jsonData || (await createRandom('contacts', 2)))],
+    samples: [JSON.stringify(jsonData)],
   }
   await jsonInput.addSource(jsonSource)
 
@@ -56,6 +62,7 @@ export default async function handler(
   const optionalProps = req.query.optionalProps as string
 
   const quickTypeJson = await quickType(
+    req.body,
     url,
     language,
     schemaName,
