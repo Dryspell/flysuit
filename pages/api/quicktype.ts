@@ -48,6 +48,7 @@ export const quickType = async (
     rendererOptions: { 'just-types': 'true' },
     alphabetizeProperties: alpha === 'true' ? true : false,
     allPropertiesOptional: optionalProps === 'true' ? true : false,
+    // inferDateTimes: false,
   })
 }
 

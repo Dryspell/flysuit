@@ -33,6 +33,7 @@ export default async function handler(
   if (!invalidData) console.log(validate.errors)
   return res.status(200).json({
     message: `Success`,
+    schema,
     data: {
       good: validData || validate.errors,
       bad: invalidData || validate.errors,
