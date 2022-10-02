@@ -12,3 +12,19 @@ See the [Slack API docs](https://api.slack.com/messaging/webhooks) for more deta
 - **Set environment variables in `.env`**
   - Set `ENABLE_SLACK_POSTING` to **true**
   - Set `SLACK_WEBHOOK_URL` to the Webhook URL from your Slack app setting
+
+SlackManifest
+
+```JSON
+{
+    "display_information": {
+        "name": "TestingApp"
+    },
+    "settings": {
+        "org_deploy_enabled": false,
+        "socket_mode_enabled": false,
+        "is_hosted": false,
+        "token_rotation_enabled": false
+    }
+}
+```

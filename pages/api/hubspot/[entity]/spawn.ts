@@ -18,7 +18,7 @@ export default async function handler(
 
   console.log(`Spawning ${count} ${entityPlural}`)
 
-  const random = await createRandom(entityPlural, count)
+  const random = createRandom(entityPlural, count)
   const randomResults = random.message === 'Success' ? random.data : []
 
   if (req.method === 'GET') {
