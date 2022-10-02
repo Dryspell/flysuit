@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import Ajv from 'ajv'
-import addFormats from 'ajv-formats'
 import { quickType } from '../quicktype'
 import { createRandom } from '../../../lib/hubspot'
 
