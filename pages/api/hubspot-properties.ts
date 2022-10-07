@@ -33,7 +33,7 @@ export default async function handler(
     console.log(req.query)
     const entity: string = (req.query.entity as string) || 'contacts'
     const accessToken = req.query.accessToken
-    let groupName =
+    const groupName =
       req.query.groupName || entity.toLowerCase() === 'contacts'
         ? 'contactinformation'
         : entity.toLowerCase() === 'companies'

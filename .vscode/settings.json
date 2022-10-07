@@ -23,6 +23,9 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "peacock.color": "#1857a4",
   "editor": {
+    "codeActionsOnSave": {
+      "source.fixAll.eslint": true
+    },
     "defaultFormatter": "esbenp.prettier-vscode",
     "fontSize": 14,
     "formatOnSave": true,
