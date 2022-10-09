@@ -77,9 +77,9 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (profile.notAllowed) {
-        return false
-      }
+      // if (profile?.notAllowed) {
+      //   return false
+      // }
 
       return true
     },
