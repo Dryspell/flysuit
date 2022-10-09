@@ -1,7 +1,8 @@
 import { TableSort } from '@/components/MantineComponents/mantine-table'
+import { HS_Contact } from '../../lib/hubspot'
+import * as React from 'react'
 
 export async function getStaticProps() {
-  //   console.log(process.env.NEXT_APP_URL)
   const data = await fetch(
     `${process.env.NEXT_APP_URL}/api/hubspot/contacts/spawn`
   )
@@ -11,14 +12,14 @@ export async function getStaticProps() {
   return { props: { data } }
 }
 
-export default function main({ data }: any) {
-  data = data.map((item: any) => {
+export default function main({ data }: { data: HS_Contact[] }) {
+  const contacts = data.map((contact: HS_Contact) => {
     return {
-      name: `${item.firstname} ${item.lastname}`,
-      email: item.email,
-      company: item.company,
+      name: `${contact.firstname} ${contact.lastname}`,
+      email: contact.email,
+      company: contact.company,
     }
   })
 
-  return <TableSort data={data} />
+  return <TableSort data={contacts} />
 }

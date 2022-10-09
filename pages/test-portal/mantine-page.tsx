@@ -15,6 +15,7 @@ import {
   StatsSegments,
   testData as StatsSegmentsData,
 } from '@/components/MantineComponents/stats/stats-with-segments'
+import * as React from 'react'
 
 const PRIMARY_COL_HEIGHT = 300
 

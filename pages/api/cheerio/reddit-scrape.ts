@@ -43,14 +43,22 @@ export default async function handler(
       `[${subreddit}] Found ${findMongoArticles.length} articles in MongoDB`
     )
 
-    const newArticles = await Promise.all(
-      links
-        .filter(
-          (link) =>
-            !findMongoArticles.map((article) => article.url).includes(link)
-        )
-        .map((link: string) => scrape(link, 'p'))
-    )
+    const newArticles = (
+      await Promise.all(
+        links
+          .filter(
+            (link) =>
+              !findMongoArticles.map((article) => article.url).includes(link)
+          )
+          .map((link: string) => scrape(link, 'p'))
+      )
+    ).map((result) => {
+      if (typeof result !== 'string')
+        return {
+          subreddit,
+          ...result,
+        }
+    })
     console.log(
       `[${subreddit}] Retrieved ${newArticles.length} new articles from their sources`
     )
@@ -66,7 +74,7 @@ export default async function handler(
 
     const results = [...findMongoArticles, ...newArticles]
 
-    return { [subreddit]: results }
+    return { results }
   }
   const articles = await Promise.all(subreddits.map(getTopArticles))
 
