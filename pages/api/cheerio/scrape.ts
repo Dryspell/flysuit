@@ -66,6 +66,11 @@ export default async function handler(
       url: 'https://en.wikipedia.org/wiki/Boston',
       selector: 'p',
     },
+    {
+      exampleName: 'news article',
+      url: 'https://www.cnn.com/2022/10/09/europe/russia-draft-dodgers-kazakhstan-intl-hnk/index.html',
+      selector: 'h1',
+    },
   ]
   const getExampleResults = async () => {
     const results = await Promise.all(

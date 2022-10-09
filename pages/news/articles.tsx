@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { ChakraProvider, Link } from '@chakra-ui/react'
 import {
   Accordion,
@@ -11,12 +10,16 @@ import {
 } from '@chakra-ui/react'
 import { ScrapeResult } from 'pages/api/cheerio/scrape'
 import NextLink from 'next/link'
+import React, { useState, useEffect } from 'react'
 
 type Article = { title: string; url: string; text: string[] }
 
-export async function getServerSideProps() {
+export async function getArticles() {
+  console.log(process.env.NEXT_APP_URL)
   const data = await fetch(
-    `${process.env.NEXT_APP_URL}/api/cheerio/reddit-scrape?t=today&sort=top`
+    `${
+      process.env.NEXT_APP_URL || 'http://localhost:3000'
+    }/api/cheerio/reddit-scrape?t=today&sort=top`
   )
     .then((res) => res.json())
     .then((data) => data)
@@ -59,10 +62,20 @@ export async function getServerSideProps() {
       }
     })
 
-  return { props: { articles } }
+  return { articles }
 }
 
-export default function Page({ articles }: { articles: Article[] }) {
+export default function Page() {
+  const [articles, setArticles] = useState<Article[]>([])
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      const articles = (await getArticles()).articles
+      setArticles(articles)
+    }
+    fetchArticles()
+  }, [])
+
   return (
     <ChakraProvider>
       <Accordion>
