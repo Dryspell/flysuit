@@ -13,7 +13,7 @@ function replacePlaceholder(
   placeholder: string,
   replaceWith: string
 ) {
-  cursor.setText(cursor.getText().replace(placeholder, replaceWith))
+  cursor.setValue(cursor.value.replace(placeholder, replaceWith))
 }
 
 export function handleUploadImages(
@@ -21,14 +21,16 @@ export function handleUploadImages(
   files: File[]
 ) {
   const cursor = new Cursor(textareaEl)
-  const currentLineNumber = cursor.getCurrentPosition().lineNumber
+  const currentLineNumber = cursor.position.line
 
   files.forEach(async (file, idx) => {
     const placeholder = `![Uploading ${file.name}...]()`
 
-    cursor.spliceContent(Cursor.raw`${placeholder}${Cursor.$}`, {
-      startLineNumber: currentLineNumber + idx,
-    })
+    // !Errors here with the update to textarea-markdown-editor
+    // cursor.insert(Cursor.raw`${placeholder}${Cursor.$}`,
+    // {
+    //   startLineNumber: currentLineNumber + idx,
+    // })
 
     try {
       const uploadedImage = await uploadImage(file)
