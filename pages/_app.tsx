@@ -17,7 +17,7 @@ type AppPropsWithAuthAndLayout = AppProps & {
 }
 
 function MyApp({
-  Component,
+  Component, //@ts-ignore
   pageProps: { session, ...pageProps },
 }: AppPropsWithAuthAndLayout) {
   const getLayout = Component.getLayout ?? ((page) => page)
