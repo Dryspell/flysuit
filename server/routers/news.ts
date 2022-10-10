@@ -6,7 +6,10 @@ export type Article = { title: string; url: string; text: string[] }
 
 export async function getArticles() {
   console.log(process.env.NEXT_APP_URL)
-  const data = await fetch(`/api/cheerio/reddit-scrape?t=today&sort=top`, {})
+  const data = await fetch(
+    `${process.env.NEXT_APP_URL}/api/cheerio/reddit-scrape?t=today&sort=top`,
+    {}
+  )
     .then((res) => res.json())
     .then((data) => data)
   console.log(`Received ${data.length} topics`)
