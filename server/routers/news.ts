@@ -1,6 +1,5 @@
 import { createRouter } from '../create-router'
 import { ScrapeResult } from 'pages/api/cheerio/scrape'
-import { z } from 'zod'
 
 export type Article = { title: string; url: string; text: string[] }
 

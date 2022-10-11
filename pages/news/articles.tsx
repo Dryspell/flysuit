@@ -11,7 +11,7 @@ import {
 import NextLink from 'next/link'
 import React, { useState, useEffect } from 'react'
 import { trpc } from '@/lib/trpc'
-import { Article, newsRouter } from '@/server/routers/news'
+import { Article } from '@/server/routers/news'
 
 export default function Page() {
   const articles = trpc.useQuery(['news.articles']).data
