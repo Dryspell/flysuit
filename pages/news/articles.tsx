@@ -6,29 +6,25 @@ import {
   AccordionPanel,
   AccordionIcon,
   Box,
+  Container,
   Text,
 } from '@chakra-ui/react'
 import NextLink from 'next/link'
 import React, { useState, useEffect } from 'react'
 import { trpc } from '@/lib/trpc'
-import { Article } from '@/server/routers/news'
 
 export default function Page() {
-  const articles = trpc.useQuery(['news.articles']).data
+  const { isLoading, data: articles } = trpc.useQuery(['news.articles'])
 
-  // const [articles, setArticles] = useState<Article[]>([])
-  // useEffect(() => {
-  //   const fetchArticles = async () => {
-  //     articles && setArticles(articles)
-  //   }
-  //   fetchArticles()
-  // }, [])
-
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
   return (
     <ChakraProvider>
+      {/* <Container> */}
       <Accordion>
         {articles
-          ? articles.map((article: Article) => {
+          ? articles.map((article) => {
               return (
                 <AccordionItem key={article.url}>
                   <h2>
@@ -44,7 +40,7 @@ export default function Page() {
                       <Link>{article.url}</Link>
                     </NextLink>
                     {article.text.map((p) => (
-                      <Text key={p}>{p}</Text>
+                      <p key={p}>{p}</p>
                     ))}
                   </AccordionPanel>
                 </AccordionItem>
@@ -52,6 +48,7 @@ export default function Page() {
             })
           : null}
       </Accordion>
+      {/* </Container> */}
     </ChakraProvider>
   )
 }

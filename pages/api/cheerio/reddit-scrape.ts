@@ -8,7 +8,7 @@ export default async function handler(
 ) {
   const subreddits = [
     'politics',
-    'worldnews',
+    // 'worldnews',
     // 'news'
   ]
   const sort = req.query.sort === 'top' ? 'top' : 'hot'
@@ -43,38 +43,43 @@ export default async function handler(
       `[${subreddit}] Found ${findMongoArticles.length} articles in MongoDB`
     )
 
-    const newArticles = (
-      await Promise.all(
-        links
-          .filter(
-            (link) =>
-              !findMongoArticles.map((article) => article.url).includes(link)
-          )
-          .map((link: string) => scrape(link, 'p'))
-      )
-    ).map((result) => {
-      if (typeof result !== 'string')
-        return {
-          subreddit,
-          ...result,
-        }
-    })
-    console.log(
-      `[${subreddit}] Retrieved ${newArticles.length} new articles from their sources`
-    )
-
-    if (newArticles.length) {
-      const insertMongoArticles = await db
-        .collection('articles')
-        .insertMany(newArticles as ScrapeResult[])
+    try {
+      const newArticles = (
+        await Promise.all(
+          links
+            .filter(
+              (link) =>
+                !findMongoArticles.map((article) => article.url).includes(link)
+            )
+            .map((link: string) => scrape(link, 'p'))
+        )
+      ).map((result) => {
+        if (typeof result !== 'string')
+          return {
+            subreddit,
+            ...result,
+          }
+      })
       console.log(
-        `[${subreddit}] Inserted ${insertMongoArticles.insertedCount} new articles into MongoDB`
+        `[${subreddit}] Retrieved ${newArticles.length} new articles from their sources`
       )
+
+      if (newArticles.length) {
+        const insertMongoArticles = await db
+          .collection('articles')
+          .insertMany(newArticles as ScrapeResult[])
+        console.log(
+          `[${subreddit}] Inserted ${insertMongoArticles.insertedCount} new articles into MongoDB`
+        )
+      }
+
+      const results = [...findMongoArticles, ...newArticles]
+
+      return { results }
+    } catch (err) {
+      console.log(err)
+      return { results: findMongoArticles }
     }
-
-    const results = [...findMongoArticles, ...newArticles]
-
-    return { results }
   }
   const articles = await Promise.all(subreddits.map(getTopArticles))
 

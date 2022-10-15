@@ -72,19 +72,24 @@ export default async function handler(
       selector: 'h1',
     },
   ]
-  const getExampleResults = async () => {
-    const results = await Promise.all(
-      examples.map((example) =>
-        scrape(example.url, example.selector, example.attribute)
-      )
-    )
-    return results
-  }
 
-  const results = url
-    ? await scrape(url, selector, req.query.attribute as string)
-    : {
-        examples: await getExampleResults(),
-      }
-  return res.status(200).json(results)
+  try {
+    const getExampleResults = async () => {
+      const results = await Promise.all(
+        examples.map((example) =>
+          scrape(example.url, example.selector, example.attribute)
+        )
+      )
+      return results
+    }
+
+    const results = url
+      ? await scrape(url, selector, req.query.attribute as string)
+      : {
+          examples: await getExampleResults(),
+        }
+    return res.status(200).json(results)
+  } catch (err: any) {
+    return res.status(400).json(err.message)
+  }
 }
