@@ -6,6 +6,7 @@ export function ASetMinusB(a: any[], b: any[]) {
 }
 
 export function splitIntoChunks(arr: any[], chunkSize: number) {
+  arr = [...arr]
   let tempArray: any[] = []
   while (arr.length > 0) {
     tempArray.push(arr.splice(0, chunkSize))
