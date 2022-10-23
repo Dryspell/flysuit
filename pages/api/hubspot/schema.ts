@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 const exampleSchema = {
@@ -111,7 +112,7 @@ type InputSchema = {
   properties: sampleJSON | { [key: string]: HSPropertyData }
 }
 
-const parseSchema = (schema: InputSchema) => {
+const parseSchema = async (schema: InputSchema) => {
   const primaryDisplayProperty =
     Object.values(schema.properties).find(
       (prop: HSPropertyData) => prop?.isPrimaryDisplayLabel === true
@@ -129,11 +130,12 @@ const parseSchema = (schema: InputSchema) => {
     .filter((prop: HSPropertyData) => prop.isSearchable === true)
     .map((prop: HSPropertyData) => prop.name as string)
 
-  const parsedSchema: HSSchema = {
+  const parsedSchema = {
     name: schema?.name || 'my_object',
     labels: {
-      singular:
-        schema?.labels?.singular || formatToHRText(schema.name || 'my_object'),
+      singular: schema?.labels?.singular
+        ? formatToHRText(schema?.labels?.singular)
+        : formatToHRText(schema.name || 'my_object'),
       plural:
         schema?.labels?.plural ||
         formatToHRText(schema.name || 'my_object') + 's',
@@ -141,7 +143,8 @@ const parseSchema = (schema: InputSchema) => {
     properties: Object.entries(schema.properties)
       .filter(([key, value]) => value != null)
       .map(([key, value]) => {
-        const hsPropertyData: HSPropertyData = {
+        // const hsPropertyData: HSPropertyData = {
+        const hsPropertyData = {
           name: value?.name || key.toLowerCase(),
           label: value?.label || formatToHRText(key),
           ...(value?.isPrimaryDisplayLabel && { isPrimaryDisplayLabel: true }),
@@ -191,6 +194,32 @@ const parseSchema = (schema: InputSchema) => {
     ...(!!searchableProperties.length && { requiredProperties }),
   }
 
+  const prisma = new PrismaClient()
+  await prisma.$connect()
+
+  await prisma.hS_Schema.create({
+    data: {
+      name: parsedSchema.name,
+      labels: {
+        create: {
+          singular: parsedSchema.labels.singular,
+          plural: parsedSchema.labels.plural,
+        },
+      },
+      properties: {
+        create: parsedSchema.properties,
+      },
+      associatedObjects: {
+        create: parsedSchema.associatedObjects.map((obj) => ({
+          name: obj,
+        })),
+      },
+      primaryDisplayProperty: parsedSchema.primaryDisplayProperty,
+    },
+  })
+
+  await prisma.$disconnect()
+
   return parsedSchema
 }
 
@@ -204,7 +233,7 @@ const parseValuesBySchema = (schema: sampleJSON, values: sampleJSON) => {
 }
 
 const isHSSchema = (schema: any): schema is HSSchema => {
-  return schema.properties != null
+  return schema?.properties != null
 }
 const isSampleJSON = (schema: any): schema is sampleJSON => {
   let truth = true
@@ -221,21 +250,23 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (isHSSchema(req.body.schema)) {
-    return res.status(200).json({
-      data: {
-        input: req.body,
-        output: parseSchema(req.body.schema),
-      },
-    })
-  }
-  if (isSampleJSON(req.body)) {
-    return res.status(200).json({
-      data: {
-        input: req.body,
-        output: parseSchema({ properties: req.body }),
-      },
-    })
+  if (Object.keys(req.body).length !== 0) {
+    if (isHSSchema(req.body.schema)) {
+      return res.status(200).json({
+        data: {
+          input: req.body,
+          output: parseSchema(req.body.schema),
+        },
+      })
+    }
+    if (isSampleJSON(req.body)) {
+      return res.status(200).json({
+        data: {
+          input: req.body,
+          output: parseSchema({ properties: req.body }),
+        },
+      })
+    }
   }
 
   return res.status(200).json({

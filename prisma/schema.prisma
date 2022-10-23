@@ -10,6 +10,7 @@ datasource db {
   provider             = "mysql"
   url                  = env("DATABASE_URL")
   referentialIntegrity = "prisma"
+  shadowDatabaseUrl    = env("SHADOW_DATABASE_URL")
 }
 
 enum Role {
@@ -114,4 +115,81 @@ model Comment {
 
   @@index([authorId])
   @@index([postId])
+}
+
+model HS_Schema {
+  id                         Int                             @id @default(autoincrement())
+  name                       String                          @db.VarChar(255)
+  labels                     HS_Label[]
+  properties                 HS_Property[]
+  associatedObjects          HS_AssociatedObjects[]
+  primaryDisplayProperty     String
+  secondaryDisplayProperties HS_SecondaryDisplayProperties[]
+  requiredProperties         HS_RequiredProperties[]
+  searchableProperties       HS_SearchableProperties[]
+}
+
+model HS_Label {
+  id       Int       @id @default(autoincrement())
+  schema   HS_Schema @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+  schemaId Int
+  singular String    @db.VarChar(255)
+  plural   String    @db.VarChar(255)
+}
+
+model HS_Property {
+  id                      Int                 @id @default(autoincrement())
+  schema                  HS_Schema           @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+  schemaId                Int
+  name                    String              @db.VarChar(255)
+  label                   String              @db.VarChar(255)
+  type                    String              @db.VarChar(255)
+  fieldType               String              @db.VarChar(255)
+  isPrimaryDisplayLabel   Boolean?            @default(false)
+  isSecondaryDisplayLabel Boolean?            @default(false)
+  displayOrder            Int                 @default(-1)
+  hidden                  Boolean?            @default(false)
+  description             String?
+  groupName               String?
+  hasUniqueValue          Boolean?            @default(false)
+  options                 HS_PropertyOption[]
+}
+
+model HS_PropertyOption {
+  id           Int         @id @default(autoincrement())
+  property     HS_Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId   Int
+  label        String      @db.VarChar(255)
+  value        String      @db.VarChar(255)
+  description  String?
+  displayOrder Int         @default(-1)
+  hidden       Boolean?    @default(false)
+}
+
+model HS_AssociatedObjects {
+  id       Int       @id @default(autoincrement())
+  schema   HS_Schema @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+  schemaId Int
+  name     String    @db.VarChar(255)
+}
+
+model HS_SecondaryDisplayProperties {
+  id       Int       @id @default(autoincrement())
+  schema   HS_Schema @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+  schemaId Int
+  name     String    @db.VarChar(255)
+}
+
+model HS_RequiredProperties {
+  id       Int       @id @default(autoincrement())
+  schema   HS_Schema @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+  schemaId Int
+  name     String    @db.VarChar(255)
+}
+
+model HS_SearchableProperties {
+  id       Int       @id @default(autoincrement())
+  schema   HS_Schema @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+  schemaId Int
+  name     String    @db.VarChar(255)
 }
