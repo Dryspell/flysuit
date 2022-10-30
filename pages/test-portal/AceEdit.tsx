@@ -2,6 +2,9 @@ import React from 'react'
 import type { IAceEditorProps } from 'react-ace'
 import dynamic from 'next/dynamic'
 
+// Refer to https://github.com/cc7gs/next-react-ace/blob/main/components/AceEdit/index.tsx
+// for the original source code of this component.
+
 export const languages = [
   'javascript',
   'java',
