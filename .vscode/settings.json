@@ -85,5 +85,6 @@
       "fontSize": 16
     }
   },
-  "files.autoSave": "afterDelay"
+  "files.autoSave": "afterDelay",
+  "editor.stickyScroll.enabled": true
 }
