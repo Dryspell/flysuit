@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { HS_Property, PrismaClient } from '@prisma/client'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 const exampleSchema = {
@@ -70,31 +70,6 @@ type HSPropertyData = {
 
 type sampleJSON = { [key: string]: string }
 
-const testSchema = {
-  name: 'test',
-  labels: { singular: 'test' },
-  properties: {
-    firstname: 'Novella',
-    lastname: 'Von',
-    date_of_birth: '2002-07-12T11:27:25.022Z',
-    salutation: 'Mrs.',
-    twitterhandle: 'Meda46',
-    email: 'Kyleigh.Satterfield@gmail.com',
-    mobilephone: '(705) 261-5466 x53039',
-    phone: '(587) 234-5588 x23915',
-    fax: '845.552.3577 x4929',
-    address: '23910 Fredy Harbor',
-    city: 'South Hyman',
-    state: 'Indiana',
-    zip: '70869',
-    country: 'Egypt',
-    jobtitle: 'Product Infrastructure Technician',
-    company: 'Abernathy and Sons',
-    website: 'http://antique-blank.info',
-    industry: 'Solutions',
-  },
-}
-
 const formatToHRText = (text: string) => {
   const regex = /(\b[a-z](?!\s))/g
   return text
@@ -143,8 +118,7 @@ const parseSchema = async (schema: InputSchema) => {
     properties: Object.entries(schema.properties)
       .filter(([key, value]) => value != null)
       .map(([key, value]) => {
-        // const hsPropertyData: HSPropertyData = {
-        const hsPropertyData = {
+        const hsPropertyData: HSPropertyData = {
           name: value?.name || key.toLowerCase(),
           label: value?.label || formatToHRText(key),
           ...(value?.isPrimaryDisplayLabel && { isPrimaryDisplayLabel: true }),
@@ -207,6 +181,7 @@ const parseSchema = async (schema: InputSchema) => {
         },
       },
       properties: {
+        //@ts-ignore
         create: parsedSchema.properties,
       },
       associatedObjects: {
@@ -267,6 +242,31 @@ export default async function handler(
         },
       })
     }
+  }
+
+  const testSchema = {
+    name: 'test',
+    labels: { singular: 'test' },
+    properties: {
+      firstname: 'Novella',
+      lastname: 'Von',
+      date_of_birth: '2002-07-12T11:27:25.022Z',
+      salutation: 'Mrs.',
+      twitterhandle: 'Meda46',
+      email: 'Kyleigh.Satterfield@gmail.com',
+      mobilephone: '(705) 261-5466 x53039',
+      phone: '(587) 234-5588 x23915',
+      fax: '845.552.3577 x4929',
+      address: '23910 Fredy Harbor',
+      city: 'South Hyman',
+      state: 'Indiana',
+      zip: '70869',
+      country: 'Egypt',
+      jobtitle: 'Product Infrastructure Technician',
+      company: 'Abernathy and Sons',
+      website: 'http://antique-blank.info',
+      industry: 'Solutions',
+    },
   }
 
   return res.status(200).json({
