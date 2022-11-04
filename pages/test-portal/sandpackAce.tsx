@@ -2,14 +2,13 @@ import React from 'react'
 import {
   SandpackProvider,
   SandpackLayout,
-  SandpackCodeEditor,
   SandpackPreview,
 } from '@codesandbox/sandpack-react'
 import { atomDark } from '@codesandbox/sandpack-themes'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 // import styles from '../../styles/sandpackAce.css'
-import { languages, themes } from './AceEdit'
+import { languages, themes } from '../../components/AceEdit'
 
 const code = `export default function App() {
   return <h1>Hello Sandpack</h1>
