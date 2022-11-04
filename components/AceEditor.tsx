@@ -56,6 +56,9 @@ export default function Editor(props: IProps) {
       highlightActiveLine
       showGutter
       showPrintMargin
+      enableBasicAutocompletion
+      enableLiveAutocompletion
+      onChange={onChange}
       setOptions={{
         tabSize: 2,
         showLineNumbers: true,
