@@ -60,7 +60,6 @@
     "react-beforeunload": "^2.5.2",
     "react-detect-click-outside": "^1.1.2",
     "react-div-100vh": "^0.7.0",
-    "react-dom": "^18.2.0",
     "react-hook-form": "^7.26.1",
     "react-hot-toast": "^2.2.0",
     "react-query": "^3.34.14",

@@ -5,7 +5,7 @@ import {
   SandpackPreview,
 } from '@codesandbox/sandpack-react'
 import { atomDark } from '@codesandbox/sandpack-themes'
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+// import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 
 const code = `export default function App() {
   return <h1>Hello Sandpack</h1>

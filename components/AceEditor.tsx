@@ -1,9 +1,14 @@
 import React from 'react'
+import * as ace from 'ace-builds'
+import AceEditor from 'react-ace'
 import type { IAceEditorProps } from 'react-ace'
-import dynamic from 'next/dynamic'
 
-// Refer to https://github.com/cc7gs/next-react-ace/blob/main/components/AceEdit/index.tsx
-// for the original source code of this component.
+ace.config.set('basePath', 'https://ace.c9.io/build/src-noconflict/')
+import 'ace-builds/src-noconflict/mode-python'
+import 'ace-builds/src-noconflict/mode-javascript'
+import 'ace-builds/src-noconflict/theme-dracula'
+import 'ace-builds/src-noconflict/theme-github'
+import 'ace-builds/src-noconflict/ext-language_tools'
 
 export const languages = [
   'javascript',
@@ -37,22 +42,16 @@ export const themes = [
   'terminal',
 ]
 
-const AceEditor = dynamic(async () => {
-  const ace = await import('react-ace')
-  languages.forEach((lang) => {
-    require(`ace-builds/src-noconflict/mode-${lang}`)
-  })
-  themes.forEach((theme) => {
-    require(`ace-builds/src-noconflict/theme-${theme}`)
-  })
-  return ace
-})
+function onChange(newValue: string) {
+  console.log('change', newValue)
+}
 
 interface IProps extends Omit<IAceEditorProps, 'setOptions'> {}
-export default function CodeEditor(props: IProps) {
+export default function Editor(props: IProps) {
   return (
     <AceEditor
-      theme="github"
+      mode="javascript"
+      theme="monokai"
       fontSize="14"
       highlightActiveLine
       showGutter
