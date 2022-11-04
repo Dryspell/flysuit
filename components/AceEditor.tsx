@@ -57,7 +57,7 @@ export default function Editor(props: IProps) {
       showGutter
       showPrintMargin
       enableBasicAutocompletion
-      enableLiveAutocompletion
+      // enableLiveAutocompletion
       onChange={onChange}
       setOptions={{
         tabSize: 2,
