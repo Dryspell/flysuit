@@ -273,7 +273,7 @@ export default async function handler(
     message: `No input provided, showing example output`,
     data: {
       input: testSchema,
-      output: parseSchema(testSchema),
+      output: await parseSchema(testSchema),
     },
   })
 }
