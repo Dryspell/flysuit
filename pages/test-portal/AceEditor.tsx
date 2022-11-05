@@ -9,7 +9,7 @@ const AceEditor = dynamic(() => import('../../components/AceEditor'), {
 
 export default function Page() {
   const [code, setCode] = React.useState('')
-  const onChange = (newValue: string) => {
+  const onCodeInputChange = (newValue: string) => {
     // console.log('change', newValue)
     newValue =
       newValue[0] === '{' && newValue[newValue.length - 1] === '}'
@@ -57,7 +57,7 @@ export default function Page() {
       <Container my="md">
         <Grid gutter="xl" justify="center">
           <Grid.Col span={6}>
-            <AceEditor mode={'json5'} onChange={onChange} />
+            <AceEditor mode={'json5'} onChange={onCodeInputChange} />
           </Grid.Col>
           <Grid.Col offsetMd={1} span={5}>
             <AceEditor mode={'json5'} value={code} />

@@ -27,7 +27,7 @@ const useStyles = createStyles((theme) => ({
 export function GradientSegmentedControl(props: any) {
   const { classes } = useStyles()
   const data =
-    props.data.length > 0
+    props?.data?.length > 0
       ? props.data
       : ['All', 'AI/ML', 'C++', 'Rust', 'TypeScript']
   const [value, setValue] = useState(data[0])
