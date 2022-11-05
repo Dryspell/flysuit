@@ -1,3 +1,4 @@
+import { GradientSegmentedControl } from '@/components/MantineComponents/GradientSegementedControl'
 import { Container, Grid } from '@mantine/core'
 import dynamic from 'next/dynamic'
 import React from 'react'
@@ -46,6 +47,13 @@ export default function Page() {
 
   return (
     <>
+      <Container my="md">
+        <GradientSegmentedControl
+          data={['Format', 'Hubspot Schema', 'AJV Validator', 'Quicktype']}
+          onChange={(val: any) => console.log(val)}
+        />
+      </Container>
+
       <Container my="md">
         <Grid gutter="xl" justify="center">
           <Grid.Col span={6}>
