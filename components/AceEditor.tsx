@@ -6,6 +6,7 @@ import type { IAceEditorProps } from 'react-ace'
 ace.config.set('basePath', 'https://ace.c9.io/build/src-noconflict/')
 import 'ace-builds/src-noconflict/mode-python'
 import 'ace-builds/src-noconflict/mode-javascript'
+import 'ace-builds/src-noconflict/mode-json5'
 import 'ace-builds/src-noconflict/theme-dracula'
 import 'ace-builds/src-noconflict/theme-github'
 import 'ace-builds/src-noconflict/ext-language_tools'
@@ -57,10 +58,11 @@ export default function Editor(props: IProps) {
       showGutter
       showPrintMargin
       enableBasicAutocompletion
+      wrapEnabled
       // enableLiveAutocompletion
       onChange={onChange}
       setOptions={{
-        tabSize: 2,
+        tabSize: 4,
         showLineNumbers: true,
         useWorker: false,
       }}

@@ -9,8 +9,39 @@ const AceEditor = dynamic(() => import('../../components/AceEditor'), {
 export default function Page() {
   const [code, setCode] = React.useState('')
   const onChange = (newValue: string) => {
-    console.log('change', newValue)
-    setCode(newValue)
+    // console.log('change', newValue)
+    newValue =
+      newValue[0] === '{' && newValue[newValue.length - 1] === '}'
+        ? newValue.slice(1, -2).trim()
+        : newValue
+    const cleanJson = JSON.stringify(
+      Object.fromEntries(
+        newValue
+          .replace(/\n/g, '')
+          .split(',')
+          .map((val) => val.split(':').map((val) => val.trim()))
+          .filter((val) => val.length === 2)
+      )
+    )
+    console.log(typeof cleanJson, cleanJson)
+    let isValidJSON = true
+    if (cleanJson)
+      try {
+        JSON.parse(cleanJson)
+        console.log('JSON is valid')
+        setCode(
+          JSON.parse(JSON.stringify(cleanJson))
+            .split(',')
+            .join(',\n\t')
+            .split('{')
+            .join('{\n\t')
+            .split('}')
+            .join('\n}')
+        )
+      } catch (e) {
+        isValidJSON = false
+        console.log(`Invalid JSON: ${e}`)
+      }
   }
 
   return (
@@ -18,10 +49,10 @@ export default function Page() {
       <Container my="md">
         <Grid gutter="xl" justify="center">
           <Grid.Col span={6}>
-            <AceEditor onChange={onChange} />
+            <AceEditor mode={'json5'} onChange={onChange} />
           </Grid.Col>
           <Grid.Col offsetMd={1} span={5}>
-            <AceEditor value={code} />
+            <AceEditor mode={'json5'} value={code} />
           </Grid.Col>
         </Grid>
       </Container>
