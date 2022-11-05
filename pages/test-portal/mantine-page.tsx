@@ -3,19 +3,15 @@ import {
   BadgeCard,
   testData as BadgeData,
 } from '@/components/MantineComponents/cards/card-with-badges'
-import {
-  Container,
-  Grid,
-  SimpleGrid,
-  Skeleton,
-  useMantineTheme,
-} from '@mantine/core'
+import { Container, Grid, SimpleGrid, useMantineTheme } from '@mantine/core'
 import { StatsCard } from '@/components/MantineComponents/stats/card-with-progress'
 import {
   StatsSegments,
   testData as StatsSegmentsData,
 } from '@/components/MantineComponents/stats/stats-with-segments'
 import * as React from 'react'
+import { LanguagePicker } from '@/components/MantineComponents/LanguagePicker'
+import { GradientSegmentedControl } from '@/components/MantineComponents/GradientSegementedControl'
 
 const PRIMARY_COL_HEIGHT = 300
 
@@ -25,6 +21,16 @@ export default function Page() {
 
   return (
     <Container my="md">
+      <Container my="md">
+        <SimpleGrid
+          cols={2}
+          spacing="md"
+          breakpoints={[{ maxWidth: 'sm', cols: 1 }]}
+        >
+          <LanguagePicker />
+          <GradientSegmentedControl />
+        </SimpleGrid>
+      </Container>
       <SimpleGrid
         cols={2}
         spacing="md"
@@ -38,9 +44,7 @@ export default function Page() {
           badges={BadgeData.badges}
         />
         <Grid gutter="md">
-          <Grid.Col>
-            <StatsControls />
-          </Grid.Col>
+          <Grid.Col>{/* <StatsControls /> */}</Grid.Col>
           <Grid.Col span={6}>
             <StatsCard />
           </Grid.Col>
