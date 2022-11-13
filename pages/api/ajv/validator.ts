@@ -3,10 +3,7 @@ import Ajv from 'ajv'
 import { quickType } from '../quicktype'
 import { createRandom } from '../../../lib/hubspot'
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export const validator = async (object1: any, object2: any) => {
   const ajv = new Ajv({
     allErrors: true,
     strictDefaults: false,
@@ -30,9 +27,6 @@ export default async function handler(
     },
   })
 
-  const object1 = req.body.object1 || createRandom('contacts', 1).data[0]
-  const object2 = req.body.object2 || createRandom('companies', 1).data[0]
-
   const quicktypeSchema = await quickType(
     object1,
     undefined,
@@ -44,13 +38,13 @@ export default async function handler(
     schema = JSON.parse(quicktypeSchema.lines.join('')).definitions['Object1']
   } catch (e: any) {
     console.log(e)
-    return res.status(500).json({
+    return {
       message: `Error`,
       error: e.message,
       quicktypeSchema,
       object1,
       object2,
-    })
+    }
   }
 
   try {
@@ -60,7 +54,7 @@ export default async function handler(
 
     const validate = ajv.compile(schema)
     const validityCheck = validate(object2)
-    return res.status(200).json({
+    return {
       message: `Success`,
       schema,
       inputData: {
@@ -72,11 +66,23 @@ export default async function handler(
         object2: validityCheck || validate.errors,
       },
       ajvExceptions,
-    })
+    }
   } catch (e: any) {
     // console.log(e)
-    return res
-      .status(500)
-      .json({ message: `Error`, schema, error: e.message, object1, object2 })
+    return { message: `Error`, schema, error: e.message, object1, object2 }
   }
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const object1 = req.body.object1 || createRandom('contacts', 1).data[0]
+  const object2 = req.body.object2 || createRandom('companies', 1).data[0]
+
+  const results = await validator(object1, object2)
+
+  results.message === 'Success'
+    ? res.status(200).json(results)
+    : res.status(400).json(results)
 }

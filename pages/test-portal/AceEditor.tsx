@@ -1,6 +1,7 @@
 import { GradientSegmentedControl } from '@/components/MantineComponents/GradientSegementedControl'
 import { Container, Grid } from '@mantine/core'
 import dynamic from 'next/dynamic'
+import { validator } from 'pages/api/ajv/validator'
 import { quickType } from 'pages/api/quicktype'
 import React from 'react'
 
@@ -10,40 +11,57 @@ const AceEditor = dynamic(() => import('../../components/AceEditor'), {
 
 const validateJson = (input: string) => {
   // console.log('change', newValue)
-  input =
-    input[0] === '{' && input[input.length - 1] === '}'
-      ? input.slice(1, -2).trim()
-      : input
-  const formatJSON = JSON.stringify(
-    Object.fromEntries(
-      input
-        .replace(/\n/g, '')
-        .split(',')
-        .map((val) => val.split(':').map((val) => val.trim()))
-        .filter((val) => val.length === 2)
-    )
-  )
-  console.log(typeof formatJSON, formatJSON)
+
+  const formatJSON = (input: string) => {
+    console.log('input', input)
+    input =
+      input[0] === '{' && input[input.length - 1] === '}'
+        ? input.slice(1, -1).trim()
+        : input
+    console.log('Trimmed input', input)
+    const json =
+      // JSON.stringify(
+      Object.fromEntries(
+        input
+          .replace(/\n/g, '')
+          .replace(/\t/g, '')
+          .split(',')
+          .map((val) => {
+            const split = val.split(':').map((val) => val.trim())
+            let key = split.splice(0, 1)[0]
+            console.log(`key:${key}, values:`, split.join(':'))
+            const value: any =
+              split.length > 1
+                ? formatJSON(split.join(':'))
+                : split[0]?.replace(/"/g, '').replace(/'/g, '')
+            return [key.replace(/"/g, ''), value]
+          })
+        // .filter((val) => val.length === 2)
+      )
+    // )
+    return json
+  }
+  const json = JSON.stringify(formatJSON(input))
+
+  // console.log(typeof json, json)
   let isValidJSON = true
-  if (formatJSON)
+  if (json)
     try {
-      JSON.parse(formatJSON)
-      console.log('JSON is valid')
+      const parsedJSON = JSON.parse(json)
+      // JSON.parse(json)
+      console.log('JSON is valid', parsedJSON)
     } catch (e) {
       isValidJSON = false
       console.log(`Invalid JSON: ${e}`)
     }
-  return { isValidJSON, formatJSON }
+  return { isValidJSON, formatJSON: json }
 }
 
 const formatJSON = (input: string) => {
-  return JSON.parse(JSON.stringify(input))
-    .split(',')
-    .join(',\n\t')
-    .split('{')
-    .join('{\n\t')
-    .split('}')
-    .join('\n}')
+  const { isValidJSON, formatJSON } = validateJson(input)
+  const obj = isValidJSON && JSON.parse(formatJSON)
+
+  return JSON.stringify(obj, null, '\t')
 }
 
 const functions = [
@@ -60,12 +78,43 @@ const functions = [
   {
     value: 'ajv_validator',
     label: 'AJV Validator',
-    function: () => 'ajv_validator not set',
+    function: async (input: string) => {
+      input = JSON.parse(input)
+
+      type ValidatorData = {
+        object1: any
+        object2: any
+      }
+
+      const isValidatorData = (input: any): input is ValidatorData => {
+        return (
+          Object.keys(input).includes('object1') &&
+          Object.keys(input).includes('object2')
+        )
+      }
+
+      // isValidatorData(input) &&
+      console.log(`isValidatorData:${isValidatorData(input)}`, input)
+
+      const validatorData = isValidatorData(input)
+        ? await validator(input.object1, input.object2)
+        : null
+
+      return validatorData?.message === 'Success'
+        ? formatJSON(
+            JSON.stringify({
+              schema: validatorData?.schema,
+              sanityCheck: validatorData?.outputData?.object1,
+              validityCheck: validatorData?.outputData?.object2,
+            })
+          )
+        : null
+    },
   },
   {
     value: 'quicktype',
     label: 'Quicktype',
-    function: async (input: any) =>
+    function: async (input: string) =>
       (await quickType(JSON.parse(input))).lines.join('\n'),
   },
 ]
@@ -83,7 +132,7 @@ export default function Page() {
         const f = functions.find((f) => f.value === selectedFunction)?.function
         try {
           const output = f && (await f(formatJSON))
-          setOutput(output)
+          output && setOutput(output)
         } catch (e: any) {
           setOutput(e)
         }
