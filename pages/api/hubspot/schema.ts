@@ -68,7 +68,7 @@ type HSPropertyData = {
   isSearchable?: boolean
 }
 
-type sampleJSON = { [key: string]: string }
+type flatJSON = { [key: string]: string }
 
 const formatToHRText = (text: string) => {
   const regex = /(\b[a-z](?!\s))/g
@@ -84,10 +84,37 @@ type InputSchema = {
     singular?: string
     plural?: string
   }
-  properties: sampleJSON | { [key: string]: HSPropertyData }
+  properties: flatJSON | { [key: string]: HSPropertyData }
 }
 
-const parseSchema = async (schema: InputSchema) => {
+const isHSSchema = (schema: any): schema is HSSchema => {
+  return schema?.properties != null
+}
+const isFlatJSON = (schema: any): schema is flatJSON => {
+  let truth = true
+  Object.values(schema).forEach((value) => {
+    if (typeof value !== 'string') {
+      truth = false
+      return truth
+    }
+  })
+  return truth
+}
+
+const parseSchema = async (input: any) => {
+  const schema: InputSchema =
+    input.schema && isHSSchema(input.schema)
+      ? input.schema
+      : isFlatJSON(input)
+      ? { properties: input }
+      : null
+
+  if (!schema) {
+    return {
+      error: 'Invalid schema',
+    }
+  }
+
   const primaryDisplayProperty =
     Object.values(schema.properties).find(
       (prop: HSPropertyData) => prop?.isPrimaryDisplayLabel === true
@@ -198,7 +225,9 @@ const parseSchema = async (schema: InputSchema) => {
   return parsedSchema
 }
 
-const parseValuesBySchema = (schema: sampleJSON, values: sampleJSON) => {
+//! this function is meant to convert json values to their correct types
+//! based on the schema
+const parseValuesBySchema = (schema: flatJSON, values: flatJSON) => {
   const parsedValues = Object.fromEntries(
     Object.entries(values).map(([key, value]) => {
       return [key, value]
@@ -207,41 +236,17 @@ const parseValuesBySchema = (schema: sampleJSON, values: sampleJSON) => {
   return parsedValues
 }
 
-const isHSSchema = (schema: any): schema is HSSchema => {
-  return schema?.properties != null
-}
-const isSampleJSON = (schema: any): schema is sampleJSON => {
-  let truth = true
-  Object.values(schema).forEach((value) => {
-    if (typeof value !== 'string') {
-      truth = false
-      return truth
-    }
-  })
-  return truth
-}
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   if (Object.keys(req.body).length !== 0) {
-    if (isHSSchema(req.body.schema)) {
-      return res.status(200).json({
-        data: {
-          input: req.body,
-          output: parseSchema(req.body.schema),
-        },
-      })
-    }
-    if (isSampleJSON(req.body)) {
-      return res.status(200).json({
-        data: {
-          input: req.body,
-          output: parseSchema({ properties: req.body }),
-        },
-      })
-    }
+    return res.status(200).json({
+      data: {
+        input: req.body,
+        output: parseSchema(req.body),
+      },
+    })
   }
 
   const testSchema = {

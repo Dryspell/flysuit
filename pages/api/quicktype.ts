@@ -12,14 +12,17 @@ export const quickType = async (
   language?: string,
   schemaName?: string,
   alpha?: string,
-  optionalProps?: string
+  optionalProps?: string,
+  useSample?: boolean
 ) => {
   const jsonData =
     Object.keys(json).length !== 0
       ? json
       : url
       ? await fetch(url).then((res) => res.json())
-      : await createRandom('contacts', 2)
+      : useSample
+      ? createRandom('contacts', 2)
+      : {}
   //   console.log(jsonData)
 
   const jsonInput = jsonInputForTargetLanguage('typescript')
@@ -61,6 +64,7 @@ export default async function handler(
   const schemaName = req.query.schemaName as string
   const alpha = req.query.alpha as string
   const optionalProps = req.query.optionalProps as string
+  const useSample = Boolean(req.query.useSample)
 
   const quickTypeJson = await quickType(
     req.body,
@@ -68,7 +72,8 @@ export default async function handler(
     language,
     schemaName,
     alpha,
-    optionalProps
+    optionalProps,
+    useSample
   )
   return res.status(200).send(quickTypeJson.lines.join('\n'))
 }
