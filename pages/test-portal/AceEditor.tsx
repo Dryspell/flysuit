@@ -14,41 +14,49 @@ const validateJson = (input: string) => {
 
   const formatJSON = (input: string) => {
     console.log('input', input)
-    input =
-      input[0] === '{' && input[input.length - 1] === '}'
-        ? input.slice(1, -1).trim()
-        : input
-    console.log('Trimmed input', input)
-    const json =
-      // JSON.stringify(
-      Object.fromEntries(
-        input
-          .replace(/\n/g, '')
-          .replace(/\t/g, '')
-          .split(',')
-          .map((val) => {
-            const split = val.split(':').map((val) => val.trim())
-            let key = split.splice(0, 1)[0]
-            console.log(`key:${key}, values:`, split.join(':'))
-            const value: any =
-              split.length > 1
-                ? formatJSON(split.join(':'))
-                : split[0]?.replace(/"/g, '').replace(/'/g, '')
-            return [key.replace(/"/g, ''), value]
-          })
-        // .filter((val) => val.length === 2)
-      )
-    // )
-    return json
-  }
-  const json = JSON.stringify(formatJSON(input))
+    input = input.replace(/\n/g, '').replace(/\t/g, '')
 
-  // console.log(typeof json, json)
+    const [previous, ...rest] = input.split('{')
+    let [last, ...middle] = rest.join('{').split('}').reverse()
+    middle = middle.filter((t) => Boolean(t)).map((t) => t.trim())
+    const currentObj = middle?.[0] || ''
+    console.log('previous', previous)
+    console.log('middle', middle)
+    console.log('last', last)
+    console.log('currentObj', currentObj)
+
+    // input =
+    //   input[0] === '{' && input[input.length - 1] === '}'
+    //     ? input.slice(1, -1).trim()
+    //     : input
+
+    console.log('Trimmed input', currentObj)
+    const json = Object.fromEntries(
+      currentObj.split(',').map((val) => {
+        const split = val.split(':').map((val) => val.trim())
+        let key = split.splice(0, 1)[0]
+        console.log(`key:${key}, values:`, split.join(':'))
+        const value: any = split.includes('{')
+          ? formatJSON(split.join(':'))
+          : split[0]?.replace(/"/g, '')
+        return [key.replace(/"/g, ''), value]
+      })
+    )
+    const test = [
+      previous,
+      [JSON.stringify(json), last].filter((t) => Boolean(t)).join('}'),
+    ]
+      .filter((t) => Boolean(t))
+      .join('{')
+    console.log('test', test)
+    return test
+  }
+  const json = formatJSON(input)
+
   let isValidJSON = true
   if (json)
     try {
       const parsedJSON = JSON.parse(json)
-      // JSON.parse(json)
       console.log('JSON is valid', parsedJSON)
     } catch (e) {
       isValidJSON = false
