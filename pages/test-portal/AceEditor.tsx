@@ -4,70 +4,28 @@ import dynamic from 'next/dynamic'
 import { validator } from 'pages/api/ajv/validator'
 import { quickType } from 'pages/api/quicktype'
 import React from 'react'
+import JSON5 from 'json5'
 
 const AceEditor = dynamic(() => import('../../components/AceEditor'), {
   ssr: false,
 })
 
 const validateJson = (input: string) => {
-  // console.log('change', newValue)
+  if (!input) input = '{}'
 
-  const formatJSON = (input: string) => {
-    console.log('input', input)
-    input = input.replace(/\n/g, '').replace(/\t/g, '')
-
-    const [previous, ...rest] = input.split('{')
-    let [last, ...middle] = rest.join('{').split('}').reverse()
-    middle = middle.filter((t) => Boolean(t)).map((t) => t.trim())
-    const currentObj = middle?.[0] || ''
-    console.log('previous', previous)
-    console.log('middle', middle)
-    console.log('last', last)
-    console.log('currentObj', currentObj)
-
-    // input =
-    //   input[0] === '{' && input[input.length - 1] === '}'
-    //     ? input.slice(1, -1).trim()
-    //     : input
-
-    console.log('Trimmed input', currentObj)
-    const json = Object.fromEntries(
-      currentObj.split(',').map((val) => {
-        const split = val.split(':').map((val) => val.trim())
-        let key = split.splice(0, 1)[0]
-        console.log(`key:${key}, values:`, split.join(':'))
-        const value: any = split.includes('{')
-          ? formatJSON(split.join(':'))
-          : split[0]?.replace(/"/g, '')
-        return [key.replace(/"/g, ''), value]
-      })
-    )
-    const test = [
-      previous,
-      [JSON.stringify(json), last].filter((t) => Boolean(t)).join('}'),
-    ]
-      .filter((t) => Boolean(t))
-      .join('{')
-    console.log('test', test)
-    return test
+  try {
+    const parsedJSON = JSON5.parse(input)
+    console.log('JSON is valid', parsedJSON)
+    return { isValidJSON: true, parsedJSON }
+  } catch (e) {
+    console.log(`Invalid JSON: ${e}`)
+    return { isValidJSON: false, parsedJSON: {} }
   }
-  const json = formatJSON(input)
-
-  let isValidJSON = true
-  if (json)
-    try {
-      const parsedJSON = JSON.parse(json)
-      console.log('JSON is valid', parsedJSON)
-    } catch (e) {
-      isValidJSON = false
-      console.log(`Invalid JSON: ${e}`)
-    }
-  return { isValidJSON, formatJSON: json }
 }
 
 const formatJSON = (input: string) => {
-  const { isValidJSON, formatJSON } = validateJson(input)
-  const obj = isValidJSON && JSON.parse(formatJSON)
+  const { isValidJSON, parsedJSON } = validateJson(input)
+  const obj = isValidJSON && parsedJSON
 
   return JSON.stringify(obj, null, '\t')
 }
@@ -87,7 +45,9 @@ const functions = [
     value: 'ajv_validator',
     label: 'AJV Validator',
     function: async (input: string) => {
-      input = JSON.parse(input)
+      const { isValidJSON, parsedJSON } = validateJson(input)
+
+      if (!isValidJSON) return 'Invalid JSON'
 
       type ValidatorData = {
         object1: any
@@ -102,11 +62,22 @@ const functions = [
       }
 
       // isValidatorData(input) &&
-      console.log(`isValidatorData:${isValidatorData(input)}`, input)
+      console.log(`isValidatorData:${isValidatorData(parsedJSON)}`, parsedJSON)
 
-      const validatorData = isValidatorData(input)
-        ? await validator(input.object1, input.object2)
+      const validatorData = isValidatorData(parsedJSON)
+        ? await validator(parsedJSON.object1, parsedJSON.object2)
         : null
+
+      if (!validatorData)
+        return JSON.stringify(
+          {
+            message:
+              'Input is not validator data, please supply a JSON object with two fields: object1 and object2',
+            input: parsedJSON,
+          },
+          null,
+          '\t'
+        )
 
       return validatorData?.message === 'Success'
         ? formatJSON(
@@ -122,8 +93,13 @@ const functions = [
   {
     value: 'quicktype',
     label: 'Quicktype',
-    function: async (input: string) =>
-      (await quickType(JSON.parse(input))).lines.join('\n'),
+    function: async (input: string) => {
+      const { isValidJSON, parsedJSON } = validateJson(input)
+      const obj = isValidJSON && parsedJSON
+      if (!obj) return 'Invalid JSON'
+
+      return (await quickType(obj)).lines.join('\n')
+    },
   },
 ]
 
@@ -134,12 +110,12 @@ export default function Page() {
 
   React.useEffect(() => {
     const onCodeInputChange = async (input: string) => {
-      const { isValidJSON, formatJSON } = validateJson(input)
+      const { isValidJSON, parsedJSON } = validateJson(input)
 
       if (isValidJSON) {
         const f = functions.find((f) => f.value === selectedFunction)?.function
         try {
-          const output = f && (await f(formatJSON))
+          const output = f && (await f(formatJSON(input)))
           output && setOutput(output)
         } catch (e: any) {
           setOutput(e)
