@@ -1,4 +1,4 @@
-import { GradientSegmentedControl } from "@/components/MantineComponents/GradientSegementedControl"
+import { GradientSegmentedControl } from "@/components/MantineComponents/GradientSegmentedControl"
 import { Container, Grid } from "@mantine/core"
 import dynamic from "next/dynamic"
 import { validator as ajvValidator } from "pages/api/ajv/validator"

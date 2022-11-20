@@ -246,7 +246,7 @@ export type AssociationDefinition = {
 	label: string
 }
 
-export async function getAssociationDefintions(
+export async function getAssociationDefinitions(
 	fromEntity: string,
 	toEntity: string
 ) {
@@ -289,7 +289,7 @@ export async function makeAssociationInputsFromRecords(
 ) {
 	associationDefinitions =
 		associationDefinitions ||
-		(await getAssociationDefintions(toEntityPlural, fromEntityPlural))
+		(await getAssociationDefinitions(toEntityPlural, fromEntityPlural))
 
 	const associationCategory = associationDefinitions[0].category
 	associationTypeId = associationTypeId
@@ -314,7 +314,7 @@ export async function makeAssociationInputsFromRecords(
 	})
 
 	console.log(
-		`Made ${associationInputs.length} Associations of ${fromEntityPlural} to ${toEntityPlural} across ${getAssociationDefintions.length} Association definitions, sample:`,
+		`Made ${associationInputs.length} Associations of ${fromEntityPlural} to ${toEntityPlural} across ${getAssociationDefinitions.length} Association definitions, sample:`,
 		associationInputs[0]
 	)
 

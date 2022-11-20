@@ -36,7 +36,7 @@ type HSPropertyData = {
 	isSearchable?: boolean
 }
 
-type flatJSON = { [key: string]: string | boolean }
+type flatJSON = { [key: string]: string | boolean | HSPropertyData }
 
 const formatToHRText = (text: string) => {
 	const regex = /(\b[a-z](?!\s))/g
@@ -76,7 +76,13 @@ export const parseSchema = async (input: any) => {
 					},
 					properties: Object.fromEntries(
 						Object.entries(input).map(([key, value]) => {
-							const hsPropertyData: HSPropertyData = { name: key }
+							const hsPropertyData: HSPropertyData =
+								typeof value === ("string" || "boolean")
+									? { name: key }
+									: typeof value === "object" &&
+									  Object.keys(value).includes("name")
+									? { ...value }
+									: { name: key }
 							if (
 								value === (true || false || "true" || "false") ||
 								hsPropertyData?.type === "boolean"
@@ -180,7 +186,7 @@ export const parseSchema = async (input: any) => {
 		...(!!requiredProperties.length && { requiredProperties }),
 		...(!!searchableProperties.length && { requiredProperties }),
 	}
-	console.log(`parsedSchema`, parsedSchema)
+	// console.log(`parsedSchema`, parsedSchema)
 
 	//! Need to set up TRPC Route to connect to Prisma on the backend
 	// try {
