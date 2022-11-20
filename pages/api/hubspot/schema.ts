@@ -1,63 +1,6 @@
 import { HS_Property, PrismaClient } from "@prisma/client"
 import type { NextApiRequest, NextApiResponse } from "next"
-
-const testSchema = {
-	name: "test",
-	labels: { singular: "test" },
-	properties: {
-		firstname: "Novella",
-		lastname: "Von",
-		date_of_birth: "2002-07-12T11:27:25.022Z",
-		salutation: "Mrs.",
-		twitterhandle: "Meda46",
-		email: "Kyleigh.Satterfield@gmail.com",
-		mobilephone: "(705) 261-5466 x53039",
-		phone: "(587) 234-5588 x23915",
-		fax: "845.552.3577 x4929",
-		address: "23910 Fredy Harbor",
-		city: "South Hyman",
-		state: "Indiana",
-		zip: "70869",
-		country: "Egypt",
-		jobtitle: "Product Infrastructure Technician",
-		company: "Abernathy and Sons",
-		website: "http://antique-blank.info",
-		industry: "Solutions",
-	},
-}
-
-const exampleSchema = {
-	labels: {
-		singular: "My object",
-		plural: "My objects",
-	},
-	requiredProperties: ["my_object_property"],
-	secondaryDisplayProperties: ["test2ndDisplayProperty"],
-	properties: [
-		{
-			name: "my_object_property",
-			label: "My object property",
-			isPrimaryDisplayLabel: true,
-			description: "TEST_Description",
-			options: [
-				{
-					label: "testLabel",
-					value: "testValue",
-					description: "testDescription",
-					displayOrder: -1,
-					hidden: true,
-				},
-			],
-			displayOrder: -1,
-			type: "enumeration",
-			fieldType: "checkbox",
-		},
-	],
-	associatedObjects: ["CONTACT"],
-	name: "my_object",
-	primaryDisplayProperty: "my_object_property",
-	metaType: "PORTAL_SPECIFIC",
-}
+import { testSchema } from "lib/hubspot"
 
 type HSSchema = {
 	name?: string
@@ -93,7 +36,7 @@ type HSPropertyData = {
 	isSearchable?: boolean
 }
 
-type flatJSON = { [key: string]: HSPropertyData } | { [key: string]: string }
+type flatJSON = { [key: string]: string | boolean }
 
 const formatToHRText = (text: string) => {
 	const regex = /(\b[a-z](?!\s))/g
@@ -103,22 +46,13 @@ const formatToHRText = (text: string) => {
 		.replace(regex, (x) => x.toUpperCase())
 }
 
-type InputSchema = {
-	name?: string
-	labels?: {
-		singular?: string
-		plural?: string
-	}
-	properties: { [key: string]: HSPropertyData }
-}
-
 const isHSSchema = (schema: any): schema is HSSchema => {
 	return schema?.properties != null
 }
 const isFlatJSON = (schema: any): schema is flatJSON => {
 	let truth = true
 	Object.values(schema).forEach((value) => {
-		if (typeof value !== "string") {
+		if (typeof value !== ("string" || "boolean")) {
 			truth = false
 			return truth
 		}
@@ -145,7 +79,7 @@ export const parseSchema = async (input: any) => {
 							const hsPropertyData: HSPropertyData = { name: key }
 							if (
 								value === (true || false || "true" || "false") ||
-								value?.type === "boolean"
+								hsPropertyData?.type === "boolean"
 							) {
 								hsPropertyData.type = "enumeration"
 								hsPropertyData.fieldType = "booleancheckbox"
@@ -163,7 +97,8 @@ export const parseSchema = async (input: any) => {
 
 	if (!schema) {
 		return {
-			error: "Invalid schema",
+			error:
+				"Invalid input schema, please supply a flat JSON object or a JSON object with a properties key",
 		}
 	}
 

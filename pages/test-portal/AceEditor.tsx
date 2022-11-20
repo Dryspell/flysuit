@@ -43,11 +43,7 @@ const functions = [
 			const { isValidJSON, parsedJSON, error } = validateJson(input)
 			if (!isValidJSON) return JSON.stringify(error, null, "\t")
 
-			console.log("parsedJSON", parsedJSON)
-			const hsSchema = await parseSchema(parsedJSON)
-			// console.log(hsSchema)
-
-			return JSON.stringify(hsSchema, null, "\t")
+			return JSON.stringify(await parseSchema(parsedJSON), null, "\t")
 		},
 	},
 	{
