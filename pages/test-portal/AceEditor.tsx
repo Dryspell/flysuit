@@ -5,6 +5,7 @@ import { validator as ajvValidator } from "pages/api/ajv/validator"
 import { quickType } from "pages/api/quicktype"
 import React from "react"
 import JSON5 from "json5"
+import { parseSchema } from "pages/api/hubspot/schema"
 
 const AceEditor = dynamic(() => import("../../components/AceEditor"), {
 	ssr: false,
@@ -24,23 +25,30 @@ const validateJson = (input: string) => {
 	}
 }
 
-const formatJSON = (input: string) => {
-	const { isValidJSON, parsedJSON, error } = validateJson(input)
-
-	if (isValidJSON) return JSON.stringify(parsedJSON, null, "\t")
-	else return JSON.stringify(error, null, "\t")
-}
-
 const functions = [
 	{
 		value: "format",
 		label: "Format",
-		function: formatJSON,
+		function: (input: string) => {
+			const { isValidJSON, parsedJSON, error } = validateJson(input)
+			if (!isValidJSON) return JSON.stringify(error, null, "\t")
+
+			return JSON.stringify(parsedJSON, null, "\t")
+		},
 	},
 	{
 		value: "hubspot_schema",
 		label: "Hubspot Schema",
-		function: () => "hubspot_schema not set",
+		function: async (input: string) => {
+			const { isValidJSON, parsedJSON, error } = validateJson(input)
+			if (!isValidJSON) return JSON.stringify(error, null, "\t")
+
+			console.log("parsedJSON", parsedJSON)
+			const hsSchema = await parseSchema(parsedJSON)
+			// console.log(hsSchema)
+
+			return JSON.stringify(hsSchema, null, "\t")
+		},
 	},
 	{
 		value: "ajv_validator",
@@ -80,12 +88,14 @@ const functions = [
 				)
 
 			return validatorData?.message === "Success"
-				? formatJSON(
-						JSON.stringify({
+				? JSON.stringify(
+						{
 							schema: validatorData?.schema,
 							sanityCheck: validatorData?.outputData?.object1,
 							validityCheck: validatorData?.outputData?.object2,
-						})
+						},
+						null,
+						"\t"
 				  )
 				: null
 		},
@@ -109,18 +119,18 @@ export default function Page() {
 
 	React.useEffect(() => {
 		const onCodeInputChange = async (input: string) => {
-			const { isValidJSON, parsedJSON } = validateJson(input)
+			// const { isValidJSON, parsedJSON } = validateJson(input)
 
-			if (isValidJSON) {
-				const f = functions.find((f) => f.value === selectedFunction)?.function
-				try {
-					const output = f && (await f(formatJSON(input)))
-					output && setOutput(output)
-				} catch (e: any) {
-					setOutput(e)
-				}
+			// if (isValidJSON) {
+			const f = functions.find((f) => f.value === selectedFunction)?.function
+			try {
+				const output = f && (await f(input))
+				output && setOutput(output)
+			} catch (e: any) {
+				setOutput(e)
 			}
 		}
+		// }
 
 		onCodeInputChange(input)
 	}, [input, selectedFunction])
@@ -134,7 +144,7 @@ export default function Page() {
 						value: val.value,
 					}))}
 					onChange={(val: any) => {
-						console.log(val)
+						console.log(`Selected function: ${val}`)
 						setSelectedFunction(val)
 					}}
 				/>
