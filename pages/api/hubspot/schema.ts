@@ -49,26 +49,15 @@ const formatToHRText = (text: string) => {
 const isHSSchema = (schema: any): schema is HSSchema => {
 	return schema?.properties != null
 }
-const isFlatJSON = (schema: any): schema is flatJSON => {
-	let truth = true
-	Object.values(schema).forEach((value) => {
-		if (typeof value !== ("string" || "boolean")) {
-			truth = false
-			return truth
-		}
-	})
-	return truth
-}
 
 export const parseSchema = async (input: any) => {
-	const schema: HSSchema | null =
+	const schema: HSSchema =
 		Object.keys(input).length && isHSSchema(input)
 			? {
 					...input,
 					name: input?.name || "my_object",
 			  }
-			: isFlatJSON(input)
-			? {
+			: {
 					name: "my_object",
 					labels: {
 						singular: formatToHRText("my_object"),
@@ -79,10 +68,10 @@ export const parseSchema = async (input: any) => {
 							const hsPropertyData: HSPropertyData =
 								typeof value === ("string" || "boolean")
 									? { name: key }
-									: typeof value === "object" &&
-									  Object.keys(value).includes("name")
+									: value && typeof value === "object" && !Array.isArray(value)
 									? { ...value }
 									: { name: key }
+
 							if (
 								value === (true || false || "true" || "false") ||
 								hsPropertyData?.type === "boolean"
@@ -99,7 +88,6 @@ export const parseSchema = async (input: any) => {
 						})
 					),
 			  }
-			: null
 
 	if (!schema) {
 		return {

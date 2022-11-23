@@ -6,6 +6,8 @@ import { quickType } from "pages/api/quicktype"
 import React from "react"
 import JSON5 from "json5"
 import { parseSchema } from "pages/api/hubspot/schema"
+import pako from "pako"
+import brotli from "brotli"
 
 const AceEditor = dynamic(() => import("../../components/AceEditor"), {
 	ssr: false,
@@ -104,6 +106,32 @@ const functions = [
 			if (!isValidJSON) return "Invalid input JSON"
 
 			return (await quickType(parsedJSON)).lines.join("\n")
+		},
+	},
+	{
+		value: "atob",
+		label: "atob",
+		function: (input: string) => {
+			const atob = Buffer.from(input, "base64").toString("utf-8")
+			return JSON.stringify(
+				{ atob, inputLength: input.length, length: atob.length },
+				null,
+				"\t"
+			)
+			// return atob(input)
+		},
+	},
+	{
+		value: "btoa",
+		label: "btoa",
+		function: (input: string) => {
+			const btoa = Buffer.from(input).toString("base64")
+			return JSON.stringify(
+				{ btoa, inputLength: input.length, length: btoa.length },
+				null,
+				"\t"
+			)
+			// return btoa(input)
 		},
 	},
 ]
