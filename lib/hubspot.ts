@@ -114,11 +114,9 @@ export function createRandomDeal(baseProps?: HS_Deal): HS_Deal {
 
 	return {
 		...{
-			dealname: `${faker.company.companyName()} | ${verb}`,
+			dealname: `${faker.company.name()} | ${verb}`,
 			closedate: faker.date.past(),
-			description: faker.fake(
-				`{{word.adjective}} {{word.noun}} ${verb} {{word.adjective}} {{word.noun}}`
-			),
+			description: `${faker.word.adjective()} ${faker.word.noun()} ${faker.word.verb()} ${faker.word.adjective()} ${faker.word.noun()}`,
 		},
 		...baseProps,
 	}
