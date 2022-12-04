@@ -80,7 +80,7 @@ export default async function handler(
 					value === null ||
 					value === undefined
 				) {
-					return [key, fakePrimitive(value)]
+					return [key, fakePrimitive(value, key)]
 				}
 
 				if (Array.isArray(value)) {
