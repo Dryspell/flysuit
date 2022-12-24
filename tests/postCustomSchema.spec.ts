@@ -34,8 +34,10 @@ test("PostCustomSchema", async ({ page }) => {
 			},
 		],
 		associatedObjects: ["CONTACT"],
-		primaryDisplayProperty: "id",
+		primaryDisplayProperty: "name",
 	}
+
+	console.log(`key:${process.env.HUBSPOT_TEST_API_KEY}`)
 
 	const postCustomSchema = await page.request
 		.post(`https://api.hubapi.com/crm/v3/schemas`, {
@@ -48,4 +50,6 @@ test("PostCustomSchema", async ({ page }) => {
 		.then((res) => res.json())
 
 	console.log(`postCustomSchema`, postCustomSchema)
+
+	expect(postCustomSchema.labels.singular).toBe("Pokemon")
 })
