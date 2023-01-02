@@ -14,9 +14,13 @@ import {
 import React from "react"
 import {
 	MINION_PART_TYPES,
+	Minion,
 	exampleMinion,
+	getInitiative,
 	exampleMinion as minion1,
 } from "pages/api/minions/schema"
+import { rotateArr } from "@/lib/set-utils"
+import { faker } from "@faker-js/faker"
 
 const useStyles = createStyles(() => ({
 	button: {
@@ -44,9 +48,18 @@ export default function Page() {
 		JSON.stringify(exampleMinion)
 	)
 	minion1.name = "Cameron"
+	minion1.id = faker.datatype.uuid()
 	minion2.name = "Noah"
+	minion2.id = faker.datatype.uuid()
 	const [turnCounter, setTurnCounter] = React.useState(0)
 	const [minions, setMinions] = React.useState([minion1, minion2])
+	const [turnOrder, setTurnOrder] = React.useState(
+		minions
+			.sort((a, b) => getInitiative(b) - getInitiative(a))
+			.map((minion) => {
+				return { id: minion.id, initiative: getInitiative(minion) }
+			})
+	)
 	const [eventLog, setEventLog] = React.useState([] as Event[])
 	const [progress, setProgress] = React.useState(minions.map((minion) => 100))
 	const eventLogEndRef: any = React.useRef(null)
@@ -91,62 +104,132 @@ export default function Page() {
 		setProgress(progress)
 	}, [minions])
 
-	const handleClick = () => {
-		console.log("Fight!")
-		const newMinions = [...minions]
-		let turn = turnCounter
-		newMinions.map((minion) => {
-			turn = incrementTurn(turn)
+	const handleTargeting = (currentMinion: Minion, minions: Minion[]) => {
+		const target = minions.find((minion) => minion.id !== currentMinion.id)
+		if (!target) {
+			throw new Error("No target found")
+		}
 
-			const minionPart =
-				minion.parts[Math.floor(Math.random() * minion.parts.length)]
+		logEvent(
+			"target determined",
+			`[${"target determined".toUpperCase()}], ${
+				currentMinion.name
+			} is targeting ${target.name}!`
+		)
+		return target
+	}
 
-			const armorHit = minionPart.armor
-				? Math.random() <
-				  minionPart.armor.durability / minionPart.armor.maxDurability
-				: false
-			const damage = Math.floor(Math.random() * 10)
-			if (armorHit) {
-				minionPart?.armor?.durability
-					? (minionPart.armor.durability -= damage)
-					: null
-			} else minionPart.health -= damage
-			const overkillDamage = Math.max(0, -1 * minionPart.health)
+	const calculateDamage = (minion: Minion, target: Minion) => {
+		const damage = Math.floor(Math.random() * 10)
+		return damage
+	}
+
+	const handleDamage = (minion: Minion, target: Minion) => {
+		const damage = calculateDamage(minion, target)
+		const targetPart =
+			target.parts[Math.floor(Math.random() * target.parts.length)]
+
+		const armorHitChance = targetPart.armor
+			? Math.floor(
+					(targetPart.armor.durability / targetPart.armor.maxDurability) * 100
+			  )
+			: 0
+		const armorHit = targetPart.armor
+			? Math.random() * 100 < armorHitChance
+			: false
+
+		if (armorHit && targetPart?.armor?.durability) {
+			targetPart.armor.durability - damage <= 0
+				? (targetPart.armor.durability = 0)
+				: (targetPart.armor.durability -= damage)
+
+			logEvent(
+				"damage",
+				`${"damage".toUpperCase()}], ${minion.name} struck ${
+					target.name
+				} in the ${targetPart.type} for ${damage} damage but was protected by ${
+					targetPart.armor.name
+				}, has remaining duribility ${targetPart.armor.durability} of ${
+					targetPart.armor.maxDurability
+				}`
+			)
+			if (armorHit && targetPart.armor.durability <= 0) {
+				logEvent(
+					"armor break",
+					`[${"armor break".toUpperCase()}], ${target.name}'s ${
+						targetPart.armor.name
+					} has been destroyed!`
+				)
+			}
+		}
+		if (!armorHit) {
+			targetPart.health -= damage
+
+			const overkillDamage = Math.max(0, -1 * targetPart.health)
 			if (overkillDamage) {
-				minionPart.health = 0
+				targetPart.health = 0
 			}
 			logEvent(
 				"damage",
-				`Event: ["damage"], ${minion.name} ${
-					armorHit && minionPart?.armor?.name
-						? `was protected by ${minionPart.armor.name}, has remaining duribility ${minionPart.armor.durability} of ${minionPart.armor.maxDurability}`
-						: `received ${damage} damage to ${minionPart.name} which has ${minionPart.health} health remaining`
-				}`
+				`[${"damage".toUpperCase()}], ${minion.name} hit ${
+					target.name
+				} ${` through open armor in the ${targetPart.name} with ${
+					100 - armorHitChance
+				}% chance! Received ${damage} damage which has ${
+					targetPart.health
+				} of ${targetPart.maxHealth} health remaining`}`
 			)
+
 			if (overkillDamage) {
-				const minionTorso = minion.parts.find((part) => part.type === "torso")
-				if (!minionTorso) throw new Error("Can't Find Minion Torso")
+				const targetTorso = target.parts.find((part) => part.type === "torso")
+				if (!targetTorso) throw new Error("Can't Find target Torso")
 				const scaledDamage = Math.floor(overkillDamage * 1.6)
-				minionTorso.health -= scaledDamage
+				targetTorso.health -= scaledDamage
 				logEvent(
 					"overkill damage",
-					`Event: ["overkill"], ${minion.name} received ${scaledDamage} overkill damage to ${minionTorso.name} which has ${minionTorso.health} health remaining`
+					`[${"overkill".toUpperCase()}], ${
+						target.name
+					} received ${scaledDamage} overkill damage from a ${
+						targetPart.name
+					} hit, ${targetTorso.name} has ${targetTorso.health} of ${
+						targetTorso.maxHealth
+					} health remaining`
 				)
-				if (
-					minion.parts.find(
-						(part) =>
-							(part.name === "head" || part.name === "torso") &&
-							part.health <= 0
-					)
-				) {
-					minion.status = "dead"
-					logEvent("death", `${minion.name} has died!`)
-				}
 			}
 
-			return minion
-		})
+			if (
+				target.parts.find(
+					(part) =>
+						(part.name === "head" || part.name === "torso") && part.health <= 0
+				)
+			) {
+				target.status = "dead"
+				logEvent("death", `${target.name} has died!`)
+			}
+		}
+	}
+
+	const handleCombat = (turn: number) => {
+		const newMinions: Minion[] = JSON.parse(JSON.stringify(minions)).sort() //[...minions]
+		const currentMinion = newMinions.find(
+			(minion) => minion.id === turnOrder[0].id
+		)
+		if (!currentMinion) throw new Error("Can't Find Current Minion")
+
+		const targetMinion = handleTargeting(currentMinion, newMinions)
+		handleDamage(currentMinion, targetMinion)
+
 		setMinions(newMinions)
+	}
+
+	const handleClick = () => {
+		console.log("Fight!")
+		let turn = turnCounter
+		turn = incrementTurn(turn)
+		const updatedTurnOrder = rotateArr([...turnOrder], 1)
+		setTurnOrder(updatedTurnOrder)
+
+		handleCombat(turn)
 	}
 
 	return (

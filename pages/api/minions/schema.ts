@@ -127,6 +127,19 @@ export const armorDefault = (
 	return armor
 }
 
+export const getInitiative = (minion: Minion) => {
+	const initiative = { total: 0, maxTotal: 0 }
+	minion.parts.forEach((part) => {
+		if (part.type === "leg") {
+			return {
+				total: initiative.total + part.health,
+				maxTotal: initiative.maxTotal + part.maxHealth,
+			}
+		}
+	})
+	return initiative.total / initiative.maxTotal
+}
+
 export const exampleMinion: Minion = {
 	id: "1",
 	name: "FrankTheMinion",
