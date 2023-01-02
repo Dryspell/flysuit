@@ -1,5 +1,6 @@
-import { ChakraProvider, Link } from "@chakra-ui/react"
 import {
+	Link,
+	ChakraProvider,
 	Accordion,
 	AccordionItem,
 	AccordionButton,

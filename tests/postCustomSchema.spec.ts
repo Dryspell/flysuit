@@ -52,4 +52,6 @@ test("PostCustomSchema", async ({ page }) => {
 	console.log(`postCustomSchema`, postCustomSchema)
 
 	expect(postCustomSchema.labels.singular).toBe("Pokemon")
+
+	// DELETE AND PURGE SCHEMA
 })
