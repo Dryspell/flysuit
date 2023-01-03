@@ -47,7 +47,7 @@ export default function Page() {
 	const minion2: typeof exampleMinion = JSON.parse(
 		JSON.stringify(exampleMinion)
 	)
-	minion1.name = "Cameron"
+	minion1.name = "Albert"
 	minion1.id = faker.datatype.uuid()
 	minion2.name = "Noah"
 	minion2.id = faker.datatype.uuid()
@@ -149,7 +149,7 @@ export default function Page() {
 					target.name
 				} in the ${targetPart.type} for ${damage} damage but was protected by ${
 					targetPart.armor.name
-				}, has remaining duribility ${targetPart.armor.durability} of ${
+				}, has remaining durability ${targetPart.armor.durability} of ${
 					targetPart.armor.maxDurability
 				}`
 			)
