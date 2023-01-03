@@ -177,7 +177,7 @@ export default function Page() {
 
 		const targetShield = target.parts.filter(
 			(part) => part.shield !== null && part.shield.durability > 0
-		)[0].shield
+		)[0]?.shield
 		if (didBlock && targetShield) {
 			targetShield.durability -= damage
 			logEvent(
