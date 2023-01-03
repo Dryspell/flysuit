@@ -25,6 +25,7 @@ export type MinionPart = {
 	name: string
 	type: "head" | "torso" | "leg" | "arm" | "hand" | "foot"
 	weapon: MinionWeapon | null
+	shield: MinionShield | null
 	armor: MinionArmor | null
 	health: number
 	maxHealth: number
@@ -35,7 +36,10 @@ export type MinionWeapon = {
 	damage: number
 	durability: number
 	maxDurability: number
-	range: number
+	minRange: number
+	maxRange: number
+	critChance: number
+	modifiers: { [key: string]: number }
 }
 export type MinionArmor = {
 	id: string
@@ -44,6 +48,7 @@ export type MinionArmor = {
 	defense: number
 	durability: number
 	maxDurability: number
+	modifiers: { [key: string]: number }
 }
 export default async function schema(
 	req: NextApiRequest,
@@ -53,9 +58,10 @@ export default async function schema(
 }
 
 export const materialMutliplier = (
-	material: "cloth" | "leather" | "copper" | "iron" = "cloth"
+	material: "cloth" | "leather" | "copper" | "iron" | "wood" = "cloth"
 ) => {
 	const materialMultiplier = {
+		wood: 1,
 		cloth: 1,
 		leather: 1.4,
 		copper: 1.9,
@@ -112,7 +118,7 @@ export const armorDefault = (
 			: "armor"
 	const armor: MinionArmor = {
 		id: faker.datatype.uuid(),
-		name: armorName,
+		name: `${material} ${armorName}`,
 		type,
 		defense: Math.floor(
 			armorDefenseDefaults(type) * materialMutliplier(material)
@@ -123,21 +129,94 @@ export const armorDefault = (
 		maxDurability: Math.floor(
 			armorDurabilityDefaults(type) * materialMutliplier(material)
 		),
+		modifiers: {},
 	}
 	return armor
 }
 
+export const weaponDefault = (
+	weaponType: "sword" | "mace" | "dagger" | "bow",
+	material: "wood" | "copper" | "iron"
+) => {
+	const defaultDamage = {
+		sword: 10,
+		mace: 10,
+		dagger: 10,
+		bow: 10,
+	}
+	const defaultDurability = {
+		sword: 20,
+		mace: 20,
+		dagger: 15,
+		bow: 20,
+	}
+	const defaultCritChance = {
+		sword: 10,
+		mace: 2,
+		dagger: 15,
+		bow: 12,
+	}
+
+	const weapon: MinionWeapon = {
+		id: faker.datatype.uuid(),
+		name: `${material} ${weaponType}`,
+		damage: defaultDamage[weaponType],
+		durability: defaultDurability[weaponType] * materialMutliplier(material),
+		maxDurability: defaultDurability[weaponType] * materialMutliplier(material),
+		minRange: 1,
+		maxRange: weaponType === "bow" ? 5 : 1,
+		critChance: defaultCritChance[weaponType],
+		modifiers: {},
+	}
+	return weapon
+}
+
+export type MinionShield = {
+	id: string
+	name: string
+	durability: number
+	maxDurability: number
+	blockChance: number
+	modifiers: { [key: string]: number }
+}
+
+export const shieldDefault = (
+	shieldType: "buckler" | "kite shield",
+	material: "wood" | "copper" | "iron"
+) => {
+	const defaultBlockChance = {
+		buckler: 10,
+		"kite shield": 20,
+	}
+	const defaultDurability = {
+		buckler: 20,
+		"kite shield": 20,
+	}
+
+	const shield: MinionShield = {
+		id: faker.datatype.uuid(),
+		name: `${material} ${shieldType}`,
+		durability: defaultDurability[shieldType],
+		maxDurability: defaultDurability[shieldType],
+		blockChance: defaultBlockChance[shieldType],
+		modifiers: {},
+	}
+	return shield
+}
+
 export const getInitiative = (minion: Minion) => {
-	const initiative = { total: 0, maxTotal: 0 }
+	const initiativePerPart = { total: 0, maxTotal: 0 }
 	minion.parts.forEach((part) => {
 		if (part.type === "leg") {
-			return {
-				total: initiative.total + part.health,
-				maxTotal: initiative.maxTotal + part.maxHealth,
-			}
+			initiativePerPart.total = initiativePerPart.total + part.health
+			initiativePerPart.maxTotal = initiativePerPart.maxTotal + part.maxHealth
 		}
 	})
-	return initiative.total / initiative.maxTotal
+	const initiative =
+		100 -
+		Math.floor(99 * (initiativePerPart.total / initiativePerPart.maxTotal))
+	// console.log(`Calculated initiative for ${minion.name} as ${initiative}`)
+	return initiative
 }
 
 export const exampleMinion: Minion = {
@@ -150,6 +229,7 @@ export const exampleMinion: Minion = {
 			type: "head",
 			name: "head",
 			weapon: null,
+			shield: null,
 			armor: armorDefault("head"),
 			health: 20,
 			maxHealth: 20,
@@ -159,6 +239,7 @@ export const exampleMinion: Minion = {
 			type: "torso",
 			name: "torso",
 			weapon: null,
+			shield: null,
 			armor: armorDefault("torso"),
 			health: 60,
 			maxHealth: 60,
@@ -168,6 +249,7 @@ export const exampleMinion: Minion = {
 			type: "leg",
 			name: "left leg",
 			weapon: null,
+			shield: null,
 			armor: armorDefault("leg"),
 			health: 25,
 			maxHealth: 25,
@@ -177,6 +259,7 @@ export const exampleMinion: Minion = {
 			type: "leg",
 			name: "right leg",
 			weapon: null,
+			shield: null,
 			armor: armorDefault("leg"),
 			health: 25,
 			maxHealth: 25,
@@ -186,6 +269,7 @@ export const exampleMinion: Minion = {
 			type: "arm",
 			name: "left arm",
 			weapon: null,
+			shield: shieldDefault("buckler", "wood"),
 			armor: armorDefault("arm"),
 			health: 17,
 			maxHealth: 17,
@@ -194,7 +278,8 @@ export const exampleMinion: Minion = {
 			id: "6",
 			type: "arm",
 			name: "right arm",
-			weapon: null,
+			weapon: weaponDefault("sword", "wood"),
+			shield: null,
 			armor: armorDefault("arm"),
 			health: 17,
 			maxHealth: 17,
@@ -204,6 +289,7 @@ export const exampleMinion: Minion = {
 			type: "hand",
 			name: "left hand",
 			weapon: null,
+			shield: null,
 			armor: armorDefault("hand"),
 			health: 10,
 			maxHealth: 10,
@@ -213,6 +299,7 @@ export const exampleMinion: Minion = {
 			type: "hand",
 			name: "right hand",
 			weapon: null,
+			shield: null,
 			armor: armorDefault("hand"),
 			health: 10,
 			maxHealth: 10,
@@ -222,6 +309,7 @@ export const exampleMinion: Minion = {
 			type: "foot",
 			name: "left foot",
 			weapon: null,
+			shield: null,
 			armor: armorDefault("foot"),
 			health: 10,
 			maxHealth: 10,
@@ -231,6 +319,7 @@ export const exampleMinion: Minion = {
 			type: "foot",
 			name: "right foot",
 			weapon: null,
+			shield: null,
 			armor: armorDefault("foot"),
 			health: 10,
 			maxHealth: 10,

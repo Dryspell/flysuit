@@ -55,10 +55,10 @@ export default function Page() {
 	const [minions, setMinions] = React.useState([minion1, minion2])
 	const [turnOrder, setTurnOrder] = React.useState(
 		minions
-			.sort((a, b) => getInitiative(b) - getInitiative(a))
 			.map((minion) => {
 				return { id: minion.id, initiative: getInitiative(minion) }
 			})
+			.sort((a, b) => a.initiative - b.initiative)
 	)
 	const [eventLog, setEventLog] = React.useState([] as Event[])
 	const [progress, setProgress] = React.useState(minions.map((minion) => 100))
@@ -119,13 +119,31 @@ export default function Page() {
 		return target
 	}
 
-	const calculateDamage = (minion: Minion, target: Minion) => {
-		const damage = Math.floor(Math.random() * 10)
-		return damage
+	const calculateDamage = (minion: Minion) => {
+		let weaponDamage = 0
+		let critChance = 0
+		const critModifier = 2
+		minion.parts.forEach((part) => {
+			if (part.weapon) {
+				weaponDamage += part.weapon?.damage
+				critChance += part.weapon?.critChance
+			}
+			if (part?.armor?.modifiers.critChance) {
+				critChance += part.armor.modifiers.critChance
+			}
+			if (part?.shield?.modifiers.critChance) {
+				critChance += part.shield.modifiers.critChance
+			}
+		})
+		const didCrit = 100 * Math.random() > critChance
+		const damage = Math.floor(
+			Math.random() * weaponDamage * (didCrit ? critModifier : 1)
+		)
+		return { damage, didCrit, critChance }
 	}
 
 	const handleDamage = (minion: Minion, target: Minion) => {
-		const damage = calculateDamage(minion, target)
+		const { damage, didCrit, critChance } = calculateDamage(minion)
 		const targetPart =
 			target.parts[Math.floor(Math.random() * target.parts.length)]
 
@@ -144,10 +162,12 @@ export default function Page() {
 				: (targetPart.armor.durability -= damage)
 
 			logEvent(
-				"damage",
-				`${"damage".toUpperCase()}], ${minion.name} struck ${
-					target.name
-				} in the ${targetPart.type} for ${damage} damage but was protected by ${
+				didCrit ? "critical hit" : "damage",
+				`[${(didCrit ? "critical hit" : "damage").toUpperCase()}], ${
+					minion.name
+				} ${didCrit ? "critically hit" : "struck"} ${target.name} in the ${
+					targetPart.type
+				} for ${damage} damage but was protected by ${
 					targetPart.armor.name
 				}, has remaining durability ${targetPart.armor.durability} of ${
 					targetPart.armor.maxDurability
@@ -170,8 +190,10 @@ export default function Page() {
 				targetPart.health = 0
 			}
 			logEvent(
-				"damage",
-				`[${"damage".toUpperCase()}], ${minion.name} hit ${
+				didCrit ? "critical hit" : "damage",
+				`[${(didCrit ? "critical hit" : "damage").toUpperCase()}], ${
+					minion.name
+				} ${didCrit ? "critically hit" : "struck"} ${
 					target.name
 				} ${` through open armor in the ${targetPart.name} with ${
 					100 - armorHitChance
@@ -209,27 +231,51 @@ export default function Page() {
 		}
 	}
 
-	const handleCombat = (turn: number) => {
-		const newMinions: Minion[] = JSON.parse(JSON.stringify(minions)).sort() //[...minions]
-		const currentMinion = newMinions.find(
-			(minion) => minion.id === turnOrder[0].id
-		)
-		if (!currentMinion) throw new Error("Can't Find Current Minion")
-
-		const targetMinion = handleTargeting(currentMinion, newMinions)
+	const handleCombat = (currentMinion: Minion, targetMinion: Minion) => {
 		handleDamage(currentMinion, targetMinion)
-
-		setMinions(newMinions)
 	}
 
 	const handleClick = () => {
 		console.log("Fight!")
 		let turn = turnCounter
 		turn = incrementTurn(turn)
-		const updatedTurnOrder = rotateArr([...turnOrder], 1)
+
+		const newMinions: Minion[] = JSON.parse(JSON.stringify(minions)).sort() //[...minions]
+		const currentMinion = newMinions.find(
+			(minion) => minion.id === turnOrder[turn].id
+		)
+		if (!currentMinion) throw new Error("Can't Find Current Minion")
+
+		const targetMinion = handleTargeting(currentMinion, newMinions)
+
+		handleCombat(currentMinion, targetMinion)
+
+		const targetMinionLastTurn = turnOrder
+			.filter((turn) => turn.id === targetMinion.id)
+			.sort((a, b) => b.initiative - a.initiative)[0]
+
+		const initiativeRoll = getInitiative(targetMinion)
+		const updatedIniative = {
+			id: targetMinion.id,
+			initiative: targetMinionLastTurn.initiative + initiativeRoll,
+		}
+		const updatedTurnOrder = [...turnOrder, updatedIniative].sort(
+			(a, b) => a.initiative - b.initiative
+		)
 		setTurnOrder(updatedTurnOrder)
 
-		handleCombat(turn)
+		logEvent(
+			"initiative roll",
+			`[${"initiative".toUpperCase()}] ${
+				targetMinion.name
+			}, whose next turn is at ${
+				targetMinionLastTurn.initiative
+			} rolled ${initiativeRoll} for initiative, yielding ${
+				updatedIniative.initiative
+			} initiative for the following turn`
+		)
+
+		setMinions(newMinions)
 	}
 
 	return (
@@ -277,16 +323,22 @@ export default function Page() {
 																			<Progress
 																				colorScheme={"green"}
 																				backgroundColor={"red"}
-																				value={Math.floor(
-																					(part.health / part.maxHealth) * 100
+																				value={Math.max(
+																					0,
+																					Math.floor(
+																						(part.health / part.maxHealth) * 100
+																					)
 																				)}
 																			/>
 																			{part.armor?.durability ? (
 																				<Progress
-																					value={Math.floor(
-																						(part.armor?.durability /
-																							part.armor?.maxDurability) *
-																							100
+																					value={Math.max(
+																						0,
+																						Math.floor(
+																							(part.armor?.durability /
+																								part.armor?.maxDurability) *
+																								100
+																						)
 																					)}
 																				/>
 																			) : null}
