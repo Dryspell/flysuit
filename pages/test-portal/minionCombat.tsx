@@ -124,15 +124,19 @@ export default function Page() {
 		let critChance = 0
 		const critModifier = 2
 		minion.parts.forEach((part) => {
-			if (part.weapon) {
-				weaponDamage += part.weapon?.damage
-				critChance += part.weapon?.critChance
-			}
-			if (part?.armor?.modifiers.critChance) {
-				critChance += part.armor.modifiers.critChance
-			}
-			if (part?.shield?.modifiers.critChance) {
-				critChance += part.shield.modifiers.critChance
+			if (part.health > 0) {
+				if (part.weapon && part.weapon.durability > 0) {
+					weaponDamage += part.weapon?.damage
+					critChance += part.weapon?.critChance
+					if (part.weapon.modifiers.critChance)
+						critChance += part.weapon.modifiers.critChance
+				}
+				if (part?.armor?.modifiers.critChance && part.armor.durability > 0) {
+					critChance += part.armor.modifiers.critChance
+				}
+				if (part?.shield?.modifiers.critChance && part.shield.durability > 0) {
+					critChance += part.shield.modifiers.critChance
+				}
 			}
 		})
 		const didCrit = 100 * Math.random() > critChance
@@ -142,10 +146,50 @@ export default function Page() {
 		return { damage, didCrit, critChance }
 	}
 
+	const calculateBlockChance = (minion: Minion) => {
+		let blockChance = 0
+		minion.parts.forEach((part) => {
+			if (part.health > 0) {
+				if (part.shield && part.shield.durability > 0) {
+					blockChance += part.shield?.blockChance
+					if (part.shield.modifiers.blockChance)
+						blockChance += part.shield.modifiers.blockChance
+				}
+				if (part?.armor?.modifiers.blockChance && part.armor.durability > 0) {
+					blockChance += part.armor.modifiers.blockChance
+				}
+				if (part?.weapon?.modifiers.blockChance && part.weapon.durability > 0) {
+					blockChance += part.weapon.modifiers.blockChance
+				}
+			}
+		})
+		// console.log(`Caluclated ${minion.name} Block Chance: ${blockChance}`)
+		return blockChance
+	}
+
 	const handleDamage = (minion: Minion, target: Minion) => {
 		const { damage, didCrit, critChance } = calculateDamage(minion)
 		const targetPart =
 			target.parts[Math.floor(Math.random() * target.parts.length)]
+
+		const blockChance = calculateBlockChance(target)
+		const didBlock = 100 * Math.random() > blockChance
+
+		const targetShield = target.parts.filter(
+			(part) => part.shield !== null && part.shield.durability > 0
+		)[0].shield
+		if (didBlock && targetShield) {
+			targetShield.durability -= damage
+			logEvent(
+				"block",
+				`[${"blocked".toUpperCase()}] ${
+					minion.name
+				} attacked for ${damage} damage but ${target.name} blocked with ${
+					targetShield.name
+				} at ${blockChance}% chance!`
+			)
+			return
+		}
 
 		const armorHitChance = targetPart.armor
 			? Math.floor(
