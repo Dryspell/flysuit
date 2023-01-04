@@ -207,7 +207,7 @@ export const shieldDefault = (
 export const getInitiative = (minion: Minion) => {
 	const initiativePerPart = { total: 0, maxTotal: 0 }
 	minion.parts.forEach((part) => {
-		if (part.type === "leg") {
+		if (["leg", "foot"].includes(part.type)) {
 			initiativePerPart.total = initiativePerPart.total + part.health
 			initiativePerPart.maxTotal = initiativePerPart.maxTotal + part.maxHealth
 		}

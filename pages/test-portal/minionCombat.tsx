@@ -173,7 +173,7 @@ export default function Page() {
 			target.parts[Math.floor(Math.random() * target.parts.length)]
 
 		const blockChance = calculateBlockChance(target)
-		const didBlock = 100 * Math.random() > blockChance
+		const didBlock = 100 * Math.random() < blockChance
 
 		const targetShield = target.parts.filter(
 			(part) => part.shield !== null && part.shield.durability > 0
@@ -241,7 +241,7 @@ export default function Page() {
 					target.name
 				} ${` through open armor in the ${targetPart.name} with ${
 					100 - armorHitChance
-				}% chance! Received ${damage} damage which has ${
+				}% chance! Received ${damage} damage to ${targetPart.name}, ${
 					targetPart.health
 				} of ${targetPart.maxHealth} health remaining`}`
 			)
@@ -314,7 +314,7 @@ export default function Page() {
 				targetMinion.name
 			}, whose next turn is at ${
 				targetMinionLastTurn.initiative
-			} rolled ${initiativeRoll} for initiative, yielding ${
+			}, rolled ${initiativeRoll} for initiative, yielding ${
 				updatedIniative.initiative
 			} initiative for the following turn`
 		)
