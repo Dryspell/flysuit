@@ -6,7 +6,7 @@ export default function Box(props: any) {
 	const texture = useLoader(TextureLoader, "/catFace.jpg")
 	return (
 		<mesh {...props} receiveShadow={true} castShadow={true}>
-			<boxBufferGeometry />
+			<boxGeometry />
 			<meshPhysicalMaterial map={texture} color="white" />
 			{/* <meshPhysicalMaterial color="white" /> */}
 		</mesh>
