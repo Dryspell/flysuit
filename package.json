@@ -26,6 +26,7 @@
 		"@next-auth/prisma-adapter": "^1.0.1",
 		"@prisma/client": "^4.5.0",
 		"@radix-ui/react-tooltip": "^1.0.0",
+		"@react-three/fiber": "^8.10.0",
 		"@tabler/icons": "^1.92.0",
 		"@trpc/client": "^9.18.0",
 		"@trpc/next": "^9.18.0",
@@ -71,6 +72,7 @@
 		"superjson": "^1.8.0",
 		"textarea-caret": "^3.1.0",
 		"textarea-markdown-editor": "^1.0.1",
+		"three": "^0.148.0",
 		"use-debounce": "^7.0.1",
 		"use-item-list": "^0.1.2",
 		"zod": "^3.11.6"
