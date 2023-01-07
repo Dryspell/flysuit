@@ -111,6 +111,9 @@
 		"import/no-unresolved": "off",
 		"import/named": "off",
 		"import/namespace": "off",
-		"react/no-unknown-property": [1, { "ignore": ["position", "intensity"] }]
+		"react/no-unknown-property": [
+			1,
+			{ "ignore": ["position", "intensity", "dragControls"] }
+		]
 	}
 }
