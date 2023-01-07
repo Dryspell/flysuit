@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useRef, useState } from "react"
 import { extend, useThree } from "@react-three/fiber"
 import { DragControls } from "three/examples/jsm/controls/DragControls"
@@ -30,7 +31,7 @@ export default function Draggable(props: any) {
 	return (
 		<group ref={groupRef}>
 			<dragControls ref={controlsRef} args={[objects, camera, gl.domElement]} />
-			{props.children}
+			// {props.children}
 		</group>
 	)
 }
