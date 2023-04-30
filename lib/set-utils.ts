@@ -1,19 +1,19 @@
-export function ASetMinusB(a: any[], b: any[]) {
+export function ASetMinusB<T>(a: T[], b: T[]) {
 	const A = new Set(a)
 	const B = new Set(b)
-	let a_minus_b = new Set([...Array.from(A)].filter((x) => !B.has(x)))
+	const a_minus_b = new Set([...Array.from(A)].filter((x) => !B.has(x)))
 	return Array.from(a_minus_b)
 }
 
-export function splitIntoChunks(arr: any[], chunkSize: number) {
+export function splitIntoChunks<T>(arr: T[], chunkSize: number) {
 	arr = [...arr]
-	let tempArray: any[] = []
+	const tempArray: T[] = []
 	while (arr.length > 0) {
-		tempArray.push(arr.splice(0, chunkSize))
+		tempArray.push(...arr.splice(0, chunkSize))
 	}
 	return tempArray
 }
 
-export const rotateArr = (arr: any[], n: number) => {
+export const rotateArr = <T>(arr: T[], n: number) => {
 	return arr.slice(n, arr.length).concat(arr.slice(0, n))
 }

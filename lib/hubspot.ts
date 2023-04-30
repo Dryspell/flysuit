@@ -3,7 +3,9 @@ import { splitIntoChunks } from "./set-utils"
 
 export const HS_Headers = (BearerToken?: string) => {
 	return {
-		Authorization: `Bearer ${BearerToken || process.env.HS_PRIVATE_APP_KEY}`,
+		Authorization: `Bearer ${
+			BearerToken || process.env.HS_PRIVATE_APP_KEY || ""
+		}`,
 		"Content-Type": "application/json",
 	}
 }
